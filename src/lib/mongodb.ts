@@ -4,7 +4,7 @@ declare global {
   var _mongoClientPromise: Promise<MongoClient>;
 }
 
-const uri = 'mongodb://localhost:27017/'; // Hardcoded MongoDB connection string
+const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/bidding-bot'; // Use environment variable with fallback
 
 let client;
 let clientPromise: Promise<MongoClient>;

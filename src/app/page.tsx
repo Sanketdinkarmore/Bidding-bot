@@ -180,7 +180,7 @@ export default function Home() {
                     </div>
                     <div className="ml-2 flex flex-shrink-0">
                       <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                        {shipment.vehicleType}
+                        {shipment.vehicleType || 'N/A'}
                       </span>
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export default function Home() {
                       <div className="flex-shrink-0">
                         <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                           <span className="text-sm font-medium text-blue-600">
-                            {user.name.charAt(0).toUpperCase()}
+                            {user.name && typeof user.name === 'string' && user.name.length > 0 ? user.name.charAt(0).toUpperCase() : ''}
                           </span>
                         </div>
                       </div>

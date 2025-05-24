@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 interface ShipmentFormData {
@@ -17,31 +17,6 @@ interface ShipmentFormData {
   remark: string;
 }
 
-// Predefined options for dropdowns
-const VEHICLE_TYPES = [
-  'Truck',
-  'Mini Truck',
-  'Pickup Van',
-  'Tata Ace',
-  '3 Wheeler',
-  'Bike',
-  'Other'
-];
-
-const COMMON_LOCATIONS = [
-  'Mumbai',
-  'Delhi',
-  'Bangalore',
-  'Hyderabad',
-  'Chennai',
-  'Kolkata',
-  'Pune',
-  'Ahmedabad',
-  'Jaipur',
-  'Lucknow',
-  'Other'
-];
-
 export default function CreateShipmentPage() {
   const [formData, setFormData] = useState<ShipmentFormData>({
     numberOfPackages: '',
@@ -56,35 +31,131 @@ export default function CreateShipmentPage() {
     dropLocation: '',
     remark: '',
   });
-
+  const [locations, setLocations] = useState<string[]>([]);
+  const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [showOtherFrom, setShowOtherFrom] = useState(false);
   const [showOtherTo, setShowOtherTo] = useState(false);
   const [showOtherVehicle, setShowOtherVehicle] = useState(false);
+  
+  // New state for conditional city search
+  const [showFromCitySearch, setShowFromCitySearch] = useState(false);
+  const [showToCitySearch, setShowToCitySearch] = useState(false);
+  const [fromCitySearchTerm, setFromCitySearchTerm] = useState('');
+  const [toCitySearchTerm, setToCitySearchTerm] = useState('');
+  const [filteredFromCities, setFilteredFromCities] = useState<string[]>([]);
+  const [filteredToCities, setFilteredToCities] = useState<string[]>([]);
+  
+  // Keep track of the selected location if 'Other' was used
+  const [selectedFromCity, setSelectedFromCity] = useState('');
+  const [selectedToCity, setSelectedToCity] = useState('');
+
+  useEffect(() => {
+    const fetchLocationsAndVehicleTypes = async () => {
+      try {
+        const response = await fetch('/api/locations');
+        if (!response.ok) {
+          throw new Error('Failed to fetch locations and vehicle types');
+        }
+        const data = await response.json();
+        setLocations(data.locations);
+        setVehicleTypes(data.vehicleTypes);
+        // Initialize filtered lists with full data
+        setFilteredFromCities(data.locations);
+        setFilteredToCities(data.locations);
+
+      } catch (error) {
+        console.error('Error fetching locations and vehicle types:', error);
+        setError('Failed to load locations and vehicle types. Please refresh the page.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLocationsAndVehicleTypes();
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Handle special cases for "Other" options
-    if (name === 'selectFrom' && value === 'Other') {
-      setShowOtherFrom(true);
-      setFormData(prev => ({ ...prev, selectFrom: '' }));
-    } else if (name === 'selectTo' && value === 'Other') {
-      setShowOtherTo(true);
-      setFormData(prev => ({ ...prev, selectTo: '' }));
+    // Handle special cases for "Other" options in city dropdowns
+    if (name === 'selectFrom') {
+      if (value === 'Other') {
+        setShowFromCitySearch(true);
+        setFormData(prev => ({ ...prev, selectFrom: '' })); // Clear form data for search input
+        setSelectedFromCity(''); // Clear selected custom city
+      } else {
+        setShowFromCitySearch(false);
+        setFormData(prev => ({ ...prev, selectFrom: value }));
+        setSelectedFromCity(value); // Set selected city from dropdown
+      }
+    } else if (name === 'selectTo') {
+      if (value === 'Other') {
+        setShowToCitySearch(true);
+        setFormData(prev => ({ ...prev, selectTo: '' })); // Clear form data for search input
+        setSelectedToCity(''); // Clear selected custom city
+      } else {
+        setShowToCitySearch(false);
+        setFormData(prev => ({ ...prev, selectTo: value }));
+        setSelectedToCity(value); // Set selected city from dropdown
+      }
     } else if (name === 'vehicleType' && value === 'Other') {
+      // Existing logic for vehicle type 'Other'
       setShowOtherVehicle(true);
       setFormData(prev => ({ ...prev, vehicleType: '' }));
     } else {
-      // Reset "Other" fields if a predefined option is selected
-      if (name === 'selectFrom' && value !== 'Other') setShowOtherFrom(false);
-      if (name === 'selectTo' && value !== 'Other') setShowOtherTo(false);
+      // Reset "Other" fields if a predefined option is selected (excluding cities now)
       if (name === 'vehicleType' && value !== 'Other') setShowOtherVehicle(false);
       
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  // Handle search input changes for From City
+  const handleFromCitySearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchTerm = e.target.value;
+    setFromCitySearchTerm(searchTerm);
+    if (searchTerm.length > 0) {
+      setFilteredFromCities(locations.filter(location =>
+        location.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+    } else {
+      setFilteredFromCities(locations);
+    }
+  };
+
+  // Handle search input changes for To City
+  const handleToCitySearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const searchTerm = e.target.value;
+    setToCitySearchTerm(searchTerm);
+    if (searchTerm.length > 0) {
+      setFilteredToCities(locations.filter(location =>
+        location.toLowerCase().includes(searchTerm.toLowerCase())
+      ));
+    } else {
+      setFilteredToCities(locations);
+    }
+  };
+
+  // Handle selection from filtered results for From City
+  const handleFromCitySelect = (location: string) => {
+    setFormData(prev => ({ ...prev, selectFrom: location }));
+    setSelectedFromCity(location);
+    setShowFromCitySearch(false); // Hide search input
+    setFromCitySearchTerm(''); // Clear search term
+    setFilteredFromCities(locations); // Reset filtered list
+  };
+
+  // Handle selection from filtered results for To City
+  const handleToCitySelect = (location: string) => {
+    setFormData(prev => ({ ...prev, selectTo: location }));
+    setSelectedToCity(location);
+    setShowToCitySearch(false); // Hide search input
+    setToCitySearchTerm(''); // Clear search term
+    setFilteredToCities(locations); // Reset filtered list
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -112,18 +183,26 @@ export default function CreateShipmentPage() {
         loadingDate: '',
         loadingTime: '',
         pickupLocation: '',
-        selectFrom: '',
-        selectTo: '',
+        selectFrom: '', // Clear form data
+        selectTo: '', // Clear form data
         vehicleType: '',
         totalWeight: '',
         totalVolume: '',
         dropLocation: '',
         remark: '',
       });
-      // Reset "Other" fields
-      setShowOtherFrom(false);
-      setShowOtherTo(false);
+      // Reset "Other" fields and search states
+      setShowOtherFrom(false); // Keep this for custom input below dropdowns if needed
+      setShowOtherTo(false); // Keep this for custom input below dropdowns if needed
       setShowOtherVehicle(false);
+      setShowFromCitySearch(false);
+      setShowToCitySearch(false);
+      setFromCitySearchTerm('');
+      setToCitySearchTerm('');
+      setFilteredFromCities(locations); // Reset filtered lists
+      setFilteredToCities(locations);
+      setSelectedFromCity(''); // Clear selected custom city
+      setSelectedToCity(''); // Clear selected custom city
 
     } catch (error) {
       setError('Error creating shipment. Please try again.');
@@ -132,6 +211,10 @@ export default function CreateShipmentPage() {
       setIsSubmitting(false);
     }
   };
+
+  // Define number of initial locations to show
+  const initialLocationsCount = 7;
+  const initialLocations = locations.slice(0, initialLocationsCount);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -196,7 +279,7 @@ export default function CreateShipmentPage() {
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                           min="1"
                           placeholder="Enter number"
                         />
@@ -215,7 +298,7 @@ export default function CreateShipmentPage() {
                           value={formData.totalWeight}
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                           min="0"
                           step="0.01"
                           placeholder="Enter weight"
@@ -238,7 +321,7 @@ export default function CreateShipmentPage() {
                           value={formData.totalVolume}
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                           min="0"
                           step="0.01"
                           placeholder="Enter volume"
@@ -268,7 +351,7 @@ export default function CreateShipmentPage() {
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                           min={new Date().toISOString().split('T')[0]}
                         />
                       </div>
@@ -287,7 +370,7 @@ export default function CreateShipmentPage() {
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                         />
                       </div>
                     </div>
@@ -298,74 +381,128 @@ export default function CreateShipmentPage() {
                 <div className="md:col-span-2">
                   <h2 className="text-lg font-medium text-gray-900 mb-4">Location Details</h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* From City */}
                     <div>
                       <label htmlFor="selectFrom" className="block text-sm font-medium text-gray-700">
                         From City
                       </label>
                       <div className="mt-1 relative">
-                        <select
-                          id="selectFrom"
-                          name="selectFrom"
-                          value={formData.selectFrom}
-                          onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
-                          required
-                          disabled={isSubmitting}
-                        >
-                          <option value="">Select a city</option>
-                          {COMMON_LOCATIONS.map((location) => (
-                            <option key={location} value={location}>
-                              {location}
-                            </option>
-                          ))}
-                        </select>
-                        {showOtherFrom && (
-                          <input
-                            type="text"
+                        {!showFromCitySearch ? (
+                          // Initial dropdown
+                          <select
+                            id="selectFrom"
                             name="selectFrom"
-                            value={formData.selectFrom}
+                            value={selectedFromCity || formData.selectFrom} // Use selectedFromCity for display
                             onChange={handleChange}
-                            className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
-                            placeholder="Enter other city"
+                            className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
                             required
-                            disabled={isSubmitting}
-                          />
+                            disabled={isSubmitting || isLoading}
+                          >
+                            <option value="">Select a city</option>
+                            {initialLocations.map((location) => (
+                              <option key={location} value={location}>
+                                {location}
+                              </option>
+                            ))}
+                            <option value="Other">Other</option>
+                          </select>
+                        ) : (
+                          // Search input and results
+                          <div>
+                            <input
+                              type="text"
+                              id="selectFromSearch"
+                              name="selectFromSearch"
+                              value={fromCitySearchTerm}
+                              onChange={handleFromCitySearchChange}
+                              className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
+                              placeholder="Search city"
+                              disabled={isSubmitting || isLoading}
+                            />
+                            {fromCitySearchTerm.length > 0 && filteredFromCities.length > 0 && (
+                              <ul className="absolute z-30 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto mt-1">
+                                {filteredFromCities.map((location) => (
+                                  <li
+                                    key={location}
+                                    className="p-2 hover:bg-gray-100 cursor-pointer text-gray-900 text-sm"
+                                    onClick={() => handleFromCitySelect(location)}
+                                  >
+                                    {location}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                             {fromCitySearchTerm.length > 0 && filteredFromCities.length === 0 && (
+                               <div className="p-2 text-sm text-gray-500">No results found</div>
+                             )}
+                          </div>
+                        )}
+                        {/* Optionally show selected city if using search, maybe as text */}
+                        {selectedFromCity && !showFromCitySearch && (
+                           <p className="mt-2 text-sm text-gray-700">Selected: {selectedFromCity}</p>
                         )}
                       </div>
                     </div>
 
+                    {/* To City */}
                     <div>
                       <label htmlFor="selectTo" className="block text-sm font-medium text-gray-700">
                         To City
                       </label>
                       <div className="mt-1 relative">
-                        <select
-                          id="selectTo"
-                          name="selectTo"
-                          value={formData.selectTo}
-                          onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
-                          required
-                          disabled={isSubmitting}
-                        >
-                          <option value="">Select a city</option>
-                          {COMMON_LOCATIONS.map((location) => (
-                            <option key={location} value={location}>
-                              {location}
-                            </option>
-                          ))}
-                        </select>
-                        {showOtherTo && (
-                          <input
-                            type="text"
+                         {!showToCitySearch ? (
+                          // Initial dropdown
+                           <select
+                            id="selectTo"
                             name="selectTo"
-                            value={formData.selectTo}
+                            value={selectedToCity || formData.selectTo} // Use selectedToCity for display
                             onChange={handleChange}
-                            className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
-                            placeholder="Enter other city"
+                            className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
                             required
-                            disabled={isSubmitting}
-                          />
+                            disabled={isSubmitting || isLoading}
+                          >
+                            <option value="">Select a city</option>
+                            {initialLocations.map((location) => (
+                              <option key={location} value={location}>
+                                {location}
+                              </option>
+                            ))}
+                            <option value="Other">Other</option>
+                          </select>
+                         ) : (
+                           // Search input and results
+                           <div>
+                            <input
+                              type="text"
+                              id="selectToSearch"
+                              name="selectToSearch"
+                              value={toCitySearchTerm}
+                              onChange={handleToCitySearchChange}
+                              className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
+                              placeholder="Search city"
+                              disabled={isSubmitting || isLoading}
+                            />
+                            {toCitySearchTerm.length > 0 && filteredToCities.length > 0 && (
+                              <ul className="absolute z-30 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto mt-1">
+                                {filteredToCities.map((location) => (
+                                  <li
+                                    key={location}
+                                    className="p-2 hover:bg-gray-100 cursor-pointer text-gray-900 text-sm"
+                                    onClick={() => handleToCitySelect(location)}
+                                  >
+                                    {location}
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                             {toCitySearchTerm.length > 0 && filteredToCities.length === 0 && (
+                               <div className="p-2 text-sm text-gray-500">No results found</div>
+                             )}
+                          </div>
+                         )}
+                        {/* Optionally show selected city if using search, maybe as text */}
+                        {selectedToCity && !showToCitySearch && (
+                           <p className="mt-2 text-sm text-gray-700">Selected: {selectedToCity}</p>
                         )}
                       </div>
                     </div>
@@ -383,7 +520,7 @@ export default function CreateShipmentPage() {
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                           placeholder="Enter detailed pickup address"
                         />
                       </div>
@@ -402,7 +539,7 @@ export default function CreateShipmentPage() {
                           onChange={handleChange}
                           className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                           placeholder="Enter detailed drop location address"
                         />
                       </div>
@@ -425,14 +562,15 @@ export default function CreateShipmentPage() {
                         onChange={handleChange}
                         className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
                         required
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isLoading}
                       >
                         <option value="">Select vehicle type</option>
-                        {VEHICLE_TYPES.map((type) => (
+                        {vehicleTypes.map((type) => (
                           <option key={type} value={type}>
                             {type}
                           </option>
                         ))}
+                        <option value="Other">Other</option>
                       </select>
                       {showOtherVehicle && (
                         <input
@@ -443,7 +581,7 @@ export default function CreateShipmentPage() {
                           className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           placeholder="Enter other vehicle type"
                           required
-                          disabled={isSubmitting}
+                          disabled={isSubmitting || isLoading}
                         />
                       )}
                     </div>
@@ -465,7 +603,7 @@ export default function CreateShipmentPage() {
                         onChange={handleChange}
                         rows={3}
                         className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || isLoading}
                         placeholder="Enter any additional remarks or special instructions"
                       ></textarea>
                     </div>
@@ -479,13 +617,13 @@ export default function CreateShipmentPage() {
                   type="button"
                   onClick={() => window.history.back()}
                   className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isLoading}
                   className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
