@@ -154,14 +154,14 @@ export default function ViewShipmentsPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Search */}
             <div>
-              <label htmlFor="search" className="block text-sm font-medium text-gray-700">Search</label>
+              <label htmlFor="search" className="block text-sm font-medium text-gray-900">Search</label>
               <div className="mt-1">
                 <input
                   type="text"
                   id="search"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
                   placeholder="Search shipments..."
                 />
               </div>
@@ -174,7 +174,7 @@ export default function ViewShipmentsPage() {
                 id="vehicleType"
                 value={selectedVehicleType}
                 onChange={(e) => setSelectedVehicleType(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
               >
                 <option value="all">All Vehicles</option>
                 {vehicleTypes.map(type => (
@@ -190,7 +190,7 @@ export default function ViewShipmentsPage() {
                 id="dateRange"
                 value={selectedDateRange}
                 onChange={(e) => setSelectedDateRange(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
               >
                 <option value="all">All Dates</option>
                 <option value="today">Today</option>
@@ -208,7 +208,7 @@ export default function ViewShipmentsPage() {
                   id="sort"
                   value={sortField}
                   onChange={(e) => setSortField(e.target.value as SortField)}
-                  className="block w-full rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                  className="block w-full rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
                 >
                   <option value="loadingDate">Loading Date</option>
                   <option value="createdAt">Created Date</option>

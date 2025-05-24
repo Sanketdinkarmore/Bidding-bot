@@ -194,7 +194,7 @@ export default function CreateShipmentPage() {
                           name="numberOfPackages"
                           value={formData.numberOfPackages}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
                           disabled={isSubmitting}
                           min="1"
@@ -214,7 +214,7 @@ export default function CreateShipmentPage() {
                           name="totalWeight"
                           value={formData.totalWeight}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           disabled={isSubmitting}
                           min="0"
                           step="0.01"
@@ -237,7 +237,7 @@ export default function CreateShipmentPage() {
                           name="totalVolume"
                           value={formData.totalVolume}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           disabled={isSubmitting}
                           min="0"
                           step="0.01"
@@ -266,7 +266,7 @@ export default function CreateShipmentPage() {
                           name="loadingDate"
                           value={formData.loadingDate}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
                           disabled={isSubmitting}
                           min={new Date().toISOString().split('T')[0]}
@@ -285,7 +285,7 @@ export default function CreateShipmentPage() {
                           name="loadingTime"
                           value={formData.loadingTime}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
                           disabled={isSubmitting}
                         />
@@ -302,13 +302,13 @@ export default function CreateShipmentPage() {
                       <label htmlFor="selectFrom" className="block text-sm font-medium text-gray-700">
                         From City
                       </label>
-                      <div className="mt-1">
+                      <div className="mt-1 relative">
                         <select
                           id="selectFrom"
                           name="selectFrom"
                           value={formData.selectFrom}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
                           required
                           disabled={isSubmitting}
                         >
@@ -325,7 +325,7 @@ export default function CreateShipmentPage() {
                             name="selectFrom"
                             value={formData.selectFrom}
                             onChange={handleChange}
-                            className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                             placeholder="Enter other city"
                             required
                             disabled={isSubmitting}
@@ -338,13 +338,13 @@ export default function CreateShipmentPage() {
                       <label htmlFor="selectTo" className="block text-sm font-medium text-gray-700">
                         To City
                       </label>
-                      <div className="mt-1">
+                      <div className="mt-1 relative">
                         <select
                           id="selectTo"
                           name="selectTo"
                           value={formData.selectTo}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
                           required
                           disabled={isSubmitting}
                         >
@@ -361,7 +361,7 @@ export default function CreateShipmentPage() {
                             name="selectTo"
                             value={formData.selectTo}
                             onChange={handleChange}
-                            className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                            className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                             placeholder="Enter other city"
                             required
                             disabled={isSubmitting}
@@ -381,7 +381,7 @@ export default function CreateShipmentPage() {
                           name="pickupLocation"
                           value={formData.pickupLocation}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
                           disabled={isSubmitting}
                           placeholder="Enter detailed pickup address"
@@ -400,7 +400,7 @@ export default function CreateShipmentPage() {
                           name="dropLocation"
                           value={formData.dropLocation}
                           onChange={handleChange}
-                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           required
                           disabled={isSubmitting}
                           placeholder="Enter detailed drop location address"
@@ -417,13 +417,13 @@ export default function CreateShipmentPage() {
                     <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700">
                       Vehicle Type
                     </label>
-                    <div className="mt-1">
+                    <div className="mt-1 relative">
                       <select
                         id="vehicleType"
                         name="vehicleType"
                         value={formData.vehicleType}
                         onChange={handleChange}
-                        className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900 relative z-20"
                         required
                         disabled={isSubmitting}
                       >
@@ -440,7 +440,7 @@ export default function CreateShipmentPage() {
                           name="vehicleType"
                           value={formData.vehicleType}
                           onChange={handleChange}
-                          className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                          className="mt-2 block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                           placeholder="Enter other vehicle type"
                           required
                           disabled={isSubmitting}
@@ -464,7 +464,7 @@ export default function CreateShipmentPage() {
                         value={formData.remark}
                         onChange={handleChange}
                         rows={3}
-                        className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                        className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                         disabled={isSubmitting}
                         placeholder="Enter any additional remarks or special instructions"
                       ></textarea>
