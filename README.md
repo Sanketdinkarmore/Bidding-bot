@@ -1,24 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Next.js MongoDB Application
+
+This is a Next.js application with MongoDB integration. It provides a simple user management system with a modern UI built using Tailwind CSS.
+
+## Prerequisites
+
+- Node.js 14.x or later
+- MongoDB running locally on port 27017
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+3. Create a `.env.local` file in the root directory with the following content:
+   ```
+   MONGODB_URI=mongodb://localhost:27017/bidding-bot
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Features
+
+- MongoDB integration with Mongoose
+- User management (Create and List)
+- Modern UI with Tailwind CSS
+- TypeScript support
+- API routes for data operations
+
+## Project Structure
+
+- `/app` - Next.js app directory containing pages and API routes
+- `/lib` - Utility functions and configurations
+- `/models` - MongoDB models
+- `/public` - Static assets
+
+## API Endpoints
+
+- `GET /api/users` - Get all users
+- `POST /api/users` - Create a new user
+
+## Technologies Used
+
+- Next.js 13+
+- MongoDB
+- Mongoose
+- TypeScript
+- Tailwind CSS
 
 ## Learn More
 
