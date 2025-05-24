@@ -6,12 +6,17 @@ export async function GET() {
     const client = await clientPromise;
     const db = client.db();
     
-    // Fetch data from the 'Location and vehicle type' collection
+    // Fetch locations from the 'Location and vehicle type' collection
     const locationAndVehicleData = await db.collection('Location and vehicle type').find({}).toArray();
     
-    // Extract locations and vehicle types from the fetched data
-    const locations = locationAndVehicleData.map(item => item['CITIES NAME']).filter((value, index, self) => self.indexOf(value) === index);
-    const vehicleTypes = locationAndVehicleData.map(item => item['VEHICLE TYPE']).filter((value, index, self) => self.indexOf(value) === index);
+    // Extract unique locations and vehicle types from the fetched data
+    // Map locations to include id and name
+    const locations = Array.from(new Set(locationAndVehicleData.map(item => JSON.stringify({
+      id: item._id, // Include the unique MongoDB _id
+      name: item['CITIES NAME']
+    })).filter(item => JSON.parse(item).name))).map(item => JSON.parse(item));
+
+    const vehicleTypes = Array.from(new Set(locationAndVehicleData.map(item => item['VEHICLE TYPE']).filter(name => name)));
     
     return NextResponse.json({
       locations: locations,
