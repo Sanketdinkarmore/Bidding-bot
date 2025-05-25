@@ -57,8 +57,8 @@ export default function CreateShipmentPage() {
   const [showOwnerBrokerSelection, setShowOwnerBrokerSelection] = useState(false);
   const [availableOwners, setAvailableOwners] = useState<{ id: string, name: string, amount: any }[]>([]);
   const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amount: any }[]>([]);
-  const [selectedOwners, setSelectedOwners] = useState<string[]>([]);
-  const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]);
+  const [selectedOwners, setSelectedOwners] = useState<string[]>([]); // Store owner IDs
+  const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]); // Store broker IDs
   const [isFetchingOwnersBrokers, setIsFetchingOwnersBrokers] = useState(false);
 
   useEffect(() => {
@@ -93,8 +93,7 @@ export default function CreateShipmentPage() {
     if (name === 'selectFrom') {
       if (value === 'Other') {
         setShowFromCitySearch(true);
-        // Don't clear formData.selectFrom here, it will be updated on selection from search results
-        // setFormData(prev => ({ ...prev, selectFrom: '' })); 
+        setFormData(prev => ({ ...prev, selectFrom: '' })); // Clear formData when selecting 'Other'
         // setSelectedFromCity(''); // Keep the selected city displayed until a new one is chosen
       } else {
         setShowFromCitySearch(false);
@@ -104,8 +103,7 @@ export default function CreateShipmentPage() {
     } else if (name === 'selectTo') {
       if (value === 'Other') {
         setShowToCitySearch(true);
-        // Don't clear formData.selectTo here
-        // setFormData(prev => ({ ...prev, selectTo: '' })); 
+        setFormData(prev => ({ ...prev, selectTo: '' })); // Clear formData when selecting 'Other'
         // setSelectedToCity(''); // Keep the selected city displayed
       } else {
         setShowToCitySearch(false);
@@ -152,18 +150,18 @@ export default function CreateShipmentPage() {
 
   // Handle selection from filtered results for From City
   const handleFromCitySelect = (location: { id: string, name: string }) => {
-    setFormData(prev => ({ ...prev, selectFrom: location.name }));
+    setFormData(prev => ({ ...prev, selectFrom: location.name })); // Ensure formData is updated
     setSelectedFromCity(location.name);
-    setShowFromCitySearch(false); // Hide search input
+    // Keep search input visible after selection
     setFromCitySearchTerm(''); // Clear search term
     setFilteredFromCities(locations); // Reset filtered list
   };
 
   // Handle selection from filtered results for To City
   const handleToCitySelect = (location: { id: string, name: string }) => {
-    setFormData(prev => ({ ...prev, selectTo: location.name }));
+    setFormData(prev => ({ ...prev, selectTo: location.name })); // Ensure formData is updated
     setSelectedToCity(location.name);
-    setShowToCitySearch(false); // Hide search input
+    // Keep search input visible after selection
     setToCitySearchTerm(''); // Clear search term
     setFilteredToCities(locations); // Reset filtered list
   };
@@ -188,33 +186,8 @@ export default function CreateShipmentPage() {
       }
 
       setSuccess('Shipment created successfully!');
-      setFormData({
-        numberOfPackages: '',
-        loadingDate: '',
-        loadingTime: '',
-        pickupLocation: '',
-        selectFrom: '', // Clear form data
-        selectTo: '', // Clear form data
-        vehicleType: '',
-        totalWeight: '',
-        totalVolume: '',
-        dropLocation: '',
-        remark: '',
-      });
-      // Reset "Other" fields and search states
-      setShowOtherFrom(false); // Keep this for custom input below dropdowns if needed
-      setShowOtherTo(false); // Keep this for custom input below dropdowns if needed
-      setShowOtherVehicle(false);
-      setShowFromCitySearch(false);
-      setShowToCitySearch(false);
-      setFromCitySearchTerm('');
-      setToCitySearchTerm('');
-      setFilteredFromCities(locations); // Reset filtered lists
-      setFilteredToCities(locations);
-      setSelectedFromCity(''); // Clear selected custom city
-      setSelectedToCity(''); // Clear selected custom city
-
-      // After successful shipment creation, fetch owners and brokers
+      // Do NOT clear formData or related state here!
+      // Only fetch owners and brokers for the next step
       fetchOwnersAndBrokers(selectedFromCity || formData.selectFrom, selectedToCity || formData.selectTo, formData.vehicleType);
 
     } catch (error) {
@@ -248,32 +221,88 @@ export default function CreateShipmentPage() {
   };
 
   // Handle owner checkbox change
-  const handleOwnerChange = (ownerName: string) => {
+  const handleOwnerChange = (ownerId: string) => {
     setSelectedOwners(prev =>
-      prev.includes(ownerName) ? prev.filter(item => item !== ownerName) : [...prev, ownerName]
+      prev.includes(ownerId) ? prev.filter(id => id !== ownerId) : [...prev, ownerId]
     );
   };
 
   // Handle broker checkbox change
-  const handleBrokerChange = (brokerName: string) => {
+  const handleBrokerChange = (brokerId: string) => {
     setSelectedBrokers(prev =>
-      prev.includes(brokerName) ? prev.filter(item => item !== brokerName) : [...prev, brokerName]
+      prev.includes(brokerId) ? prev.filter(id => id !== brokerId) : [...prev, brokerId]
     );
   };
 
   // Handle final submission after selecting owners/brokers (Optional - depends on your flow)
   const handleOwnerBrokerSubmit = async () => {
-    // Here you would typically send the selectedOwners and selectedBrokers
-    // along with the shipment ID to another API endpoint to associate them.
-    console.log('Selected Owners:', selectedOwners);
-    console.log('Selected Brokers:', selectedBrokers);
-    // Reset the form and hide the selection section after processing
-    // setFormData({ ...initial form state ... });
-    // setShowOwnerBrokerSelection(false);
-    // setAvailableOwners([]);
-    // setAvailableBrokers([]);
-    // setSelectedOwners([]);
-    // setSelectedBrokers([]);
+    setIsSubmitting(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const selectionData = {
+        shipmentDetails: {
+          fromCity: selectedFromCity || formData.selectFrom,
+          toCity: selectedToCity || formData.selectTo,
+          vehicleType: formData.vehicleType,
+          pickupLocation: formData.pickupLocation,
+          dropLocation: formData.dropLocation,
+          numberOfPackages: formData.numberOfPackages,
+          totalWeight: formData.totalWeight,
+          totalVolume: formData.totalVolume,
+          loadingDate: formData.loadingDate,
+          loadingTime: formData.loadingTime,
+          remark: formData.remark,
+        },
+        selectedOwners: availableOwners.filter(owner => selectedOwners.includes(owner.id)),
+        selectedBrokers: availableBrokers.filter(broker => selectedBrokers.includes(broker.id)),
+      };
+
+      const response = await fetch('/api/save-selection', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(selectionData),
+      });
+
+      if (!response.ok) throw new Error('Failed to save selection');
+      setSuccess('Selection saved successfully!');
+      // Now clear formData and related state after everything is done
+      setFormData({
+        numberOfPackages: '',
+        loadingDate: '',
+        loadingTime: '',
+        pickupLocation: '',
+        selectFrom: '',
+        selectTo: '',
+        vehicleType: '',
+        totalWeight: '',
+        totalVolume: '',
+        dropLocation: '',
+        remark: '',
+      });
+      setShowOtherFrom(false);
+      setShowOtherTo(false);
+      setShowOtherVehicle(false);
+      setShowFromCitySearch(false);
+      setShowToCitySearch(false);
+      setFromCitySearchTerm('');
+      setToCitySearchTerm('');
+      setFilteredFromCities(locations);
+      setFilteredToCities(locations);
+      setSelectedFromCity('');
+      setSelectedToCity('');
+      setShowOwnerBrokerSelection(false);
+      setAvailableOwners([]);
+      setAvailableBrokers([]);
+      setSelectedOwners([]);
+      setSelectedBrokers([]);
+    } catch (error) {
+      setError('Error saving selection. Please try again.');
+      console.error('Error saving selection:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Define number of initial locations to show
@@ -364,7 +393,7 @@ export default function CreateShipmentPage() {
                                 type="text"
                                 id="selectFromSearch"
                                 name="selectFromSearch"
-                                value={fromCitySearchTerm}
+                                value={selectedFromCity || fromCitySearchTerm} // Display selected city if available, otherwise search term
                                 onChange={handleFromCitySearchChange}
                                 className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                                 placeholder="Search city"
@@ -389,9 +418,6 @@ export default function CreateShipmentPage() {
                             </div>
                           )}
                           {/* Optionally show selected city if using search, maybe as text */}
-                          {selectedFromCity && !showFromCitySearch && (
-                             <p className="mt-2 text-sm text-gray-700">Selected: {selectedFromCity}</p>
-                          )}
                         </div>
                       </div>
 
@@ -427,7 +453,7 @@ export default function CreateShipmentPage() {
                                 type="text"
                                 id="selectToSearch"
                                 name="selectToSearch"
-                                value={toCitySearchTerm}
+                                value={selectedToCity || toCitySearchTerm} // Display selected city if available, otherwise search term
                                 onChange={handleToCitySearchChange}
                                 className="block w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm text-gray-900"
                                 placeholder="Search city"
@@ -452,9 +478,6 @@ export default function CreateShipmentPage() {
                             </div>
                            )}
                           {/* Optionally show selected city if using search, maybe as text */}
-                          {selectedToCity && !showToCitySearch && (
-                             <p className="mt-2 text-sm text-gray-700">Selected: {selectedToCity}</p>
-                          )}
                         </div>
                       </div>
 
@@ -711,7 +734,7 @@ export default function CreateShipmentPage() {
             ) : (
               // Owner and Broker Selection Section
               <div className="space-y-6">
-                 <h2 className="text-xl font-bold text-gray-900">Select Owners and Brokers</h2>
+                 <h2 className="text-xl font-medium text-gray-900">Select Owners and Brokers</h2>
                  <p className="text-sm text-gray-500">Based on the shipment details, here are potential owners and brokers.</p>
 
                  {isFetchingOwnersBrokers ? (
@@ -738,8 +761,8 @@ export default function CreateShipmentPage() {
                                      id={`owner-${owner.id}`}
                                      name="owners"
                                      type="checkbox"
-                                     checked={selectedOwners.includes(owner.name)}
-                                     onChange={() => handleOwnerChange(owner.name)}
+                                     checked={selectedOwners.includes(owner.id)}
+                                     onChange={() => handleOwnerChange(owner.id)}
                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                                    />
                                  </div>
@@ -773,8 +796,8 @@ export default function CreateShipmentPage() {
                                      id={`broker-${broker.id}`}
                                      name="brokers"
                                      type="checkbox"
-                                     checked={selectedBrokers.includes(broker.name)}
-                                     onChange={() => handleBrokerChange(broker.name)}
+                                     checked={selectedBrokers.includes(broker.id)}
+                                     onChange={() => handleBrokerChange(broker.id)}
                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                                    />
                                  </div>
@@ -804,8 +827,19 @@ export default function CreateShipmentPage() {
                           type="button"
                           onClick={handleOwnerBrokerSubmit}
                           className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                          disabled={isSubmitting}
                        >
-                          Confirm Selection
+                          {isSubmitting ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Saving Selection...
+                            </>
+                          ) : (
+                            'Confirm Selection'
+                          )}
                        </button>
                     </div>
                  )}
