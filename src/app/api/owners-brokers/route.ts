@@ -30,7 +30,8 @@ export async function GET(request: Request) {
     const brokers = matchingBrokersData.map(item => ({
       id: item._id, // Include the unique MongoDB _id
       name: item['Broker Name'],
-      amount: item['Challan Amount'] // Assuming 'Challan Amount' is the correct field name
+      amount: item['Challan Amount'], // Assuming 'Challan Amount' is the correct field name
+      phone: item['Broker Mobile']
     })).filter(item => item.name);
 
     // Fetch owners from the 'owner' collection (assuming similar fields)
@@ -45,7 +46,8 @@ export async function GET(request: Request) {
     const owners = matchingOwnersData.map(item => ({
       id: item._id, // Include the unique MongoDB _id
       name: item['Owner Saathi Name'], // Using the confirmed field name
-      amount: item['Challan Amount'] // Assuming 'Challan Amount' is also in owner collection
+      amount: item['Challan Amount'], // Assuming 'Challan Amount' is also in owner collection
+      phone: item['Owner Saathi Mobile']
     })).filter(item => item.name);
 
     return NextResponse.json({
