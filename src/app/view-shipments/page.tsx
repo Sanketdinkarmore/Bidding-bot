@@ -50,9 +50,25 @@ export default function ViewShipmentsPage() {
       if (!response.ok) {
         throw new Error('Failed to fetch shipments');
       }
-      const data: ShipmentData[] = await response.json();
-      setShipments(data);
-      setFilteredShipments(data);
+      const data = await response.json();
+      // Map shipmentDetails fields to top-level for UI compatibility
+      const mapped = data.map((item: any) => ({
+        _id: item._id,
+        numberOfPackages: item.shipmentDetails?.numberOfPackages || '',
+        loadingDate: item.shipmentDetails?.loadingDate || '',
+        loadingTime: item.shipmentDetails?.loadingTime || '',
+        pickupLocation: item.shipmentDetails?.pickupLocation || '',
+        selectFrom: item.shipmentDetails?.fromCity || '',
+        selectTo: item.shipmentDetails?.toCity || '',
+        vehicleType: item.shipmentDetails?.vehicleType || '',
+        totalWeight: item.shipmentDetails?.totalWeight || '',
+        totalVolume: item.shipmentDetails?.totalVolume || '',
+        dropLocation: item.shipmentDetails?.dropLocation || '',
+        remark: item.shipmentDetails?.remark || '',
+        createdAt: item.createdAt || '',
+      }));
+      setShipments(mapped);
+      setFilteredShipments(mapped);
     } catch (error) {
       setError('Error loading shipments. Please try again later.');
       console.error('Error fetching shipments:', error);

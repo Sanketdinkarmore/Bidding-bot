@@ -68,7 +68,27 @@ export default function Home() {
         throw new Error('Failed to fetch shipments');
       }
       const data = await response.json();
-      setShipments(data);
+      // Map shipmentDetails fields to top-level for UI compatibility
+      const mapped = data.map((item: { 
+        _id: string;
+        shipmentDetails?: {
+          numberOfPackages?: string | number;
+          loadingDate?: string | number;
+          fromCity?: string;
+          toCity?: string;
+          vehicleType?: string;
+        };
+        createdAt?: string;
+      }) => ({
+        _id: item._id,
+        numberOfPackages: item.shipmentDetails?.numberOfPackages || '',
+        loadingDate: item.shipmentDetails?.loadingDate || '',
+        selectFrom: item.shipmentDetails?.fromCity || '',
+        selectTo: item.shipmentDetails?.toCity || '',
+        vehicleType: item.shipmentDetails?.vehicleType || '',
+        createdAt: item.createdAt || '',
+      }));
+      setShipments(mapped);
     } catch (error) {
       console.error('Error fetching shipments:', error);
     } finally {

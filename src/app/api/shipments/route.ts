@@ -7,6 +7,9 @@ export async function POST(request: Request) {
     const client = await clientPromise;
     const db = client.db('bidding-bot'); // Your database name from .env.local
     const body = await request.json();
+
+
+
     
     // Insert data into the 'bidding_info' collection
     const result = await db.collection('bidding_info').insertOne(body);
@@ -31,7 +34,7 @@ export async function GET() {
     const db = client.db('bidding-bot'); // Your database name from .env.local
     
     // Fetch data from the 'bidding_info' collection
-    const biddingInfo = await db.collection('bidding_info').find({}).toArray();
+    const biddingInfo = await db.collection('selectedOwnerBrokers').find({}).toArray();
     
     return NextResponse.json(biddingInfo);
   } catch (error) {
