@@ -135,7 +135,7 @@ export default function ViewShipmentsPage() {
       <div className="md:flex md:items-center md:justify-between">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
-            Shipments
+            Shipments Bids List
           </h2>
         </div>
         <div className="mt-4 flex md:ml-4 md:mt-0">
@@ -285,58 +285,60 @@ export default function ViewShipmentsPage() {
               <ul role="list" className="divide-y divide-gray-200">
                 {filteredShipments.map((shipment) => (
                   <li key={shipment._id}>
-                    <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="flex flex-col">
-                          <p className="truncate text-sm font-medium text-blue-600">
-                            {shipment.selectFrom} → {shipment.selectTo}
-                          </p>
-                          <div className="mt-2 flex flex-wrap gap-4">
-                            <div className="flex items-center text-sm text-gray-500">
-                              <svg className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                              </svg>
-                              {shipment.numberOfPackages} packages
-                            </div>
-                            <div className="flex items-center text-sm text-gray-500">
-                              <svg className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clipRule="evenodd" />
-                              </svg>
-                              {new Date(shipment.loadingDate).toLocaleDateString()} at {shipment.loadingTime}
-                            </div>
-                            {shipment.totalWeight && (
+                    <Link href={`/bidding-details?id=${shipment._id}`} className="block">
+                      <div className="px-4 py-4 sm:px-6 hover:bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <div className="flex flex-col">
+                            <p className="truncate text-sm font-medium text-blue-600">
+                              {shipment.selectFrom} → {shipment.selectTo}
+                            </p>
+                            <div className="mt-2 flex flex-wrap gap-4">
                               <div className="flex items-center text-sm text-gray-500">
                                 <svg className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v5.59l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 111.1-1.02l1.95 2.1V2.75A.75.75 0 0110 2z" clipRule="evenodd" />
+                                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                                 </svg>
-                                {shipment.totalWeight} kg
+                                {shipment.numberOfPackages} packages
                               </div>
-                            )}
-                            {shipment.totalVolume && (
                               <div className="flex items-center text-sm text-gray-500">
                                 <svg className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                  <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v5.59l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 111.1-1.02l1.95 2.1V2.75A.75.75 0 0110 2z" clipRule="evenodd" />
+                                  <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clipRule="evenodd" />
                                 </svg>
-                                {shipment.totalVolume} CFT
+                                {new Date(shipment.loadingDate).toLocaleDateString()} at {shipment.loadingTime}
                               </div>
-                            )}
+                              {shipment.totalWeight && (
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <svg className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v5.59l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 111.1-1.02l1.95 2.1V2.75A.75.75 0 0110 2z" clipRule="evenodd" />
+                                  </svg>
+                                  {shipment.totalWeight} kg
+                                </div>
+                              )}
+                              {shipment.totalVolume && (
+                                <div className="flex items-center text-sm text-gray-500">
+                                  <svg className="mr-1.5 h-5 w-5 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v5.59l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 111.1-1.02l1.95 2.1V2.75A.75.75 0 0110 2z" clipRule="evenodd" />
+                                  </svg>
+                                  {shipment.totalVolume} CFT
+                                </div>
+                              )}
+                            </div>
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-500">
+                                <span className="font-medium text-gray-900">Pickup:</span> {shipment.pickupLocation}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                <span className="font-medium text-gray-900">Dropoff:</span> {shipment.dropLocation}
+                              </p>
+                            </div>
                           </div>
-                          <div className="mt-2">
-                            <p className="text-sm text-gray-500">
-                              <span className="font-medium text-gray-900">Pickup:</span> {shipment.pickupLocation}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              <span className="font-medium text-gray-900">Dropoff:</span> {shipment.dropLocation}
-                            </p>
+                          <div className="ml-2 flex flex-shrink-0">
+                            <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                              {shipment.vehicleType}
+                            </span>
                           </div>
-                        </div>
-                        <div className="ml-2 flex flex-shrink-0">
-                          <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                            {shipment.vehicleType}
-                          </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
