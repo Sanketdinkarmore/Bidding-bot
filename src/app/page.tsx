@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface User {
   _id: string;
   name: string;
-  email: string;
+  phoneNumber: string; // Changed from email
   createdAt: string;
 }
 
@@ -21,21 +22,35 @@ interface ShipmentData {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [shipments, setShipments] = useState<ShipmentData[]>([]);
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  // Keeping email state for the 'Add User' form in the dashboard for now,
+  // as the user only requested email to be replaced by phone in login/register forms.
+  // This might need adjustment depending on the backend for this specific form.
+  const [email, setEmail] = useState(''); 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Add authentication state
 
   useEffect(() => {
-    Promise.all([fetchUsers(), fetchShipments()]);
-  }, []);
+    const user = localStorage.getItem('user');
+    if (user) {
+      setIsAuthenticated(true);
+      // Fetch data only if authenticated
+      Promise.all([fetchUsers(), fetchShipments()]);
+    } else {
+      router.push('/login');
+    }
+  }, [router]);
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/users');
+      // Note: This still fetches from /api/users, which might need updating
+      // based on your user management API endpoints.
+      const response = await fetch('/api/users'); 
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
@@ -61,28 +76,35 @@ export default function Home() {
     }
   };
 
+  // handleSubmit for the 'Add User' form in the dashboard
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
     try {
-      const response = await fetch('/api/users', {
+      // Note: This endpoint and payload might need adjustment
+      // based on your user creation API endpoint.
+      const response = await fetch('/api/users', { 
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, email }),
+        // Still using email here based on the original code. 
+        // If your /api/users endpoint uses phone number, update this.
+        body: JSON.stringify({ name, email }), 
       });
       
       if (!response.ok) {
-        throw new Error('Failed to create user');
+        // Attempt to read error message from response
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to create user');
       }
       
       setName('');
       setEmail('');
-      await fetchUsers();
-    } catch (error) {
-      setError('Error creating user. Please try again.');
+      await fetchUsers(); // Refresh user list after adding
+    } catch (error: any) {
+      setError('Error creating user: ' + error.message);
       console.error('Error creating user:', error);
     } finally {
       setIsSubmitting(false);
@@ -95,6 +117,11 @@ export default function Home() {
   const totalUsers = users.length;
   const recentShipments = shipments.slice(0, 5);
 
+  if (!isAuthenticated) {
+    return null; // Redirecting to login is handled by useEffect
+  }
+
+  // Render dashboard content if authenticated
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -200,7 +227,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* User Management */}
+      {/* User Management - Note: This still uses 'email' in the form */}
       <div className="overflow-hidden bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
           <h3 className="text-lg font-medium leading-6 text-gray-900">User Management</h3>
@@ -253,9 +280,7 @@ export default function Home() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className={`inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`inline-flex justify-center rounded-md border border-transparent bg-blue-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isSubmitting ? 'Adding User...' : 'Add User'}
               </button>
@@ -278,7 +303,8 @@ export default function Home() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-                        <p className="truncate text-sm text-gray-500">{user.email}</p>
+                        {/* Display phone number instead of email if email field is removed later */}
+                        <p className="truncate text-sm text-gray-500">{user.phoneNumber}</p> 
                       </div>
                       <div className="text-sm text-gray-500">
                         {new Date(user.createdAt).toLocaleDateString()}
