@@ -20,10 +20,14 @@ export async function POST(request: Request) {
     const db = client.db('bidding-bot'); // Replace with your actual database name if different
     const collection = db.collection('selectedOwnerBrokers'); // Name for the new collection
 
+    const date = new Date();
+    const uniqueId = `${date.toLocaleString("default", { month: "short" }).toUpperCase()}${date.getDate()}${Math.floor(1000 + Math.random() * 9000)}`;
+
     // Insert the selection data into the collection
     const result = await collection.insertOne({
       ...selectionData,
-      createdAt: new Date(), // Optional: Add a timestamp
+      uniqueId,
+      createdAt: new Date(),
     });
 
     console.log('Selection saved to MongoDB:', result);
@@ -31,14 +35,12 @@ export async function POST(request: Request) {
     if (result.acknowledged) {
       const matchingBrokers = [...selectionData.selectedOwners, ...selectionData.selectedBrokers];
 
-      const date = new Date();
       const dateObjectt = Number(selectionData.shipmentDetails.loadingDate);
       const dateObject = new Date(dateObjectt);
       const day = dateObject.getDate();
       const month = dateObject.getMonth() + 1; // Months are zero-based, so we add 1
       const year = dateObject.getFullYear();
       const finaldate = `${day}/${month}/${year}`;
-      const uniqueId = `${date.toLocaleString("default", { month: "short" }).toUpperCase()}${date.getDate()}${Math.floor(1000 + Math.random() * 9000)}`;
 
       const dataz = {
         datetime: new Date().toLocaleString("en-GB", {
@@ -65,37 +67,36 @@ export async function POST(request: Request) {
       };
 
       for (const broker of matchingBrokers) {
-          const message = `
-      *New Booking Request* 📝
+        const message = `
+    *New Booking Request* 📝
 
-      🆔 *Booking ID:* ${dataz.uniqueId}
-      📅 *Date:* ${dataz.datetime}
-      🚚 *From:* ${dataz.fromm}
-      📍 *To:* ${dataz.to}
-      🚛 *Vehicle Type:* ${dataz.vehicleType}
-      ⚖️ *Total Weight:* ${dataz.totalWeight}
-      📦 *Total Volume:* ${dataz.totalVolume}
-      ⏰ *Loading Time:* ${dataz.loadingTime}
-      🏢 *Pickup Address:* ${dataz.pickupAdress}
-      📦 *Goods Quantity:* ${dataz.goodsQuantity}
-      🏢 *Delivery Address:* ${dataz.deliveryAdress}
-      📝 *Remarks:* ${dataz.remark}
+    🆔 *Booking ID:* ${dataz.uniqueId}
+    📅 *Date:* ${dataz.datetime}
+    🚚 *From:* ${dataz.fromm}
+    📍 *To:* ${dataz.to}
+    🚛 *Vehicle Type:* ${dataz.vehicleType}
+    ⚖️ *Total Weight:* ${dataz.totalWeight}
+    📦 *Total Volume:* ${dataz.totalVolume}
+    ⏰ *Loading Time:* ${dataz.loadingTime}
+    🏢 *Pickup Address:* ${dataz.pickupAdress}
+    📦 *Goods Quantity:* ${dataz.goodsQuantity}
+    🏢 *Delivery Address:* ${dataz.deliveryAdress}
+    📝 *Remarks:* ${dataz.remark}
 
-            Please select your response:
-            `;
+      Please select your response:`;
 
           const listOfButtons = [
             {
               title: "Bid",
-              id: `avail-${dataz.uniqueId}-${broker.brokerNo}`,
+              id: `avail-${uniqueId}-${broker.brokerNo}`,
             },
             {
               title: "Not Interested",
-              id: `notavail-${dataz.uniqueId}-${broker.brokerNo}`,
+              id: `notavail-${uniqueId}-${broker.brokerNo}`,
             },
             {
               title: "Need More Info",
-              id: `info-${dataz.uniqueId}-${broker.brokerNo}`,
+              id: `info-${uniqueId}-${broker.brokerNo}`,
             },
           ];
 
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
             listOfButtons,
             `91${broker.phone}`,
           );
-        }
+      }
 
       return NextResponse.json({ message: 'Selection saved successfully', insertedId: result.insertedId }, { status: 200 });
     } else {
@@ -132,3 +133,6 @@ async function sendSimpleButtons(message: string, listOfButtons: any[], recipien
 
 // You might also want to add handlers for other HTTP methods if needed, e.g., GET, PUT, DELETE
 // export async function GET(request: Request) {}
+
+
+
