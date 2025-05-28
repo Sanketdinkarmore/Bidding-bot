@@ -88,15 +88,15 @@ export async function POST(request: Request) {
           const listOfButtons = [
             {
               title: "Bid",
-              id: `avail-${uniqueId}-${broker.brokerNo}`,
+              id: `bid-${result.insertedId}-${broker.brokerNo}`,
             },
             {
               title: "Not Interested",
-              id: `notavail-${uniqueId}-${broker.brokerNo}`,
+              id: `notavail-${result.insertedId}-${broker.brokerNo}`,
             },
             {
               title: "Need More Info",
-              id: `info-${uniqueId}-${broker.brokerNo}`,
+              id: `info-${result.insertedId}-${broker.brokerNo}`,
             },
           ];
 
