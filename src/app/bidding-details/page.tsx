@@ -188,51 +188,54 @@ export default function BiddingDetailsPage() {
         {/* <div className="bg-gray-100 px-3 py-2 rounded-t text-xs font-semibold text-gray-700 border border-b-0 border-gray-200">TRAILER MULTI AXLE</div> */}
 
         {/* Bids Table Section */}
-        <div className="overflow-x-auto rounded-b-lg border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold text-gray-500 uppercase">Bidder Phone</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Amount</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Timestamp</th>
-                {/*
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Rating</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">No. of Vehicles</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Bid Diff</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Bid Time</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Primary Bid</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Vehicle No</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Rank</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase">Winner</th>
-                <th className="px-2 py-2 text-center text-xs font-semibold text-gray-500 uppercase"></th>
-                */}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-
-
-              {bids.map((bid, idx) => (
-                <tr key={bid._id || idx}>
-                  <td className="px-4 py-2 whitespace-nowrap text-gray-800">{bid.phone}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center text-gray-800">₹ {bid.amount}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center text-gray-800">{bid.timestamp ? new Date(bid.timestamp).toLocaleString() : ''}</td>
-                  {/*
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.rating}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.vehicles}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.bidDiff}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.bidTime}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">₹ {bid.primaryBid}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.vehicleNo}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.rank}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">{bid.winner && <span className="text-green-600 font-bold">WINNER</span>}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">
-                    <button className="text-gray-400 hover:text-gray-600"><svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.5"/><circle cx="19.5" cy="12" r="1.5"/><circle cx="4.5" cy="12" r="1.5"/></svg></button>
-                  </td>
-                  */}
+        <div className="overflow-hidden bg-white shadow sm:rounded-lg">
+          <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+            <h3 className="text-lg font-medium leading-6 text-gray-900">Bidding Details</h3>
+            <p className="mt-1 max-w-2xl text-sm text-gray-500">Current bids for this shipment.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Bidder Phone
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Timestamp
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {bids.map((bid, idx) => (
+                  <tr key={bid._id || idx} className="hover:bg-gray-50 transition-colors duration-150">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                          <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                          </svg>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{bid.phone}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        ₹ {bid.amount}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                      {bid.timestamp ? new Date(bid.timestamp).toLocaleString() : ''}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
