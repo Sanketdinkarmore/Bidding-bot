@@ -1,36 +1,24 @@
 import { NextResponse } from 'next/server';
-import clientPromise from '@/lib/mongodb'; 
-import WhatsappCloudAPI from "whatsappcloudapi_wrapper";
+import axios from 'axios';
 
-const Whatsapp = new WhatsappCloudAPI({
-  accessToken: process.env.Meta_WA_accessToken,
-  senderPhoneNumberId: process.env.Meta_WA_SenderPhoneNumberId,
-  WABA_ID: process.env.Meta_WA_wabaId,
-});
+import clientPromise from '@/lib/mongodb'; 
 
 export async function POST(request: Request) {
   try {
     const selectionData = await request.json();
-    const { shipmentDetails, selectedOwnerIds, selectedBrokerIds } = selectionData;
 
-    console.log('Received selection data for saving:', selectionData);
-
-    // Connect to MongoDB
     const client = await clientPromise;
-    const db = client.db('bidding-bot'); // Replace with your actual database name if different
-    const collection = db.collection('selectedOwnerBrokers'); // Name for the new collection
+    const db = client.db('bidding-bot');
+    const collection = db.collection('selectedOwnerBrokers');
 
     const date = new Date();
     const uniqueId = `${date.toLocaleString("default", { month: "short" }).toUpperCase()}${date.getDate()}${Math.floor(1000 + Math.random() * 9000)}`;
 
-    // Insert the selection data into the collection
     const result = await collection.insertOne({
       ...selectionData,
       uniqueId,
       createdAt: new Date(),
     });
-
-    console.log('Selection saved to MongoDB:', result);
 
     if (result.acknowledged) {
       const matchingBrokers = [...selectionData.selectedOwners, ...selectionData.selectedBrokers];
@@ -38,7 +26,7 @@ export async function POST(request: Request) {
       const dateObjectt = Number(selectionData.shipmentDetails.loadingDate);
       const dateObject = new Date(dateObjectt);
       const day = dateObject.getDate();
-      const month = dateObject.getMonth() + 1; // Months are zero-based, so we add 1
+      const month = dateObject.getMonth() + 1;
       const year = dateObject.getFullYear();
       const finaldate = `${day}/${month}/${year}`;
 
@@ -63,48 +51,11 @@ export async function POST(request: Request) {
         goodsQuantity: selectionData.shipmentDetails.totalVolume,
         deliveryAdress: selectionData.shipmentDetails.dropLocation,
         remark: selectionData.shipmentDetails.remark,
-        uniqueId: uniqueId,
+        uniqueId: result.insertedId,
       };
 
       for (const broker of matchingBrokers) {
-        const message = `
-    *New Booking Request* 📝
-
-    🆔 *Booking ID:* ${dataz.uniqueId}
-    📅 *Date:* ${dataz.datetime}
-    🚚 *From:* ${dataz.fromm}
-    📍 *To:* ${dataz.to}
-    🚛 *Vehicle Type:* ${dataz.vehicleType}
-    ⚖️ *Total Weight:* ${dataz.totalWeight}
-    📦 *Total Volume:* ${dataz.totalVolume}
-    ⏰ *Loading Time:* ${dataz.loadingTime}
-    🏢 *Pickup Address:* ${dataz.pickupAdress}
-    📦 *Goods Quantity:* ${dataz.goodsQuantity}
-    🏢 *Delivery Address:* ${dataz.deliveryAdress}
-    📝 *Remarks:* ${dataz.remark}
-
-      Please select your response:`;
-
-          const listOfButtons = [
-            {
-              title: "Bid",
-              id: `bid-${result.insertedId}-${broker.brokerNo}`,
-            },
-            {
-              title: "Not Interested",
-              id: `notavail-${result.insertedId}-${broker.brokerNo}`,
-            },
-            {
-              title: "Need More Info",
-              id: `info-${result.insertedId}-${broker.brokerNo}`,
-            },
-          ];
-
-          await sendSimpleButtons(
-            message,
-            listOfButtons,
-            `91${broker.phone}`,
-          );
+        await sendBiddingTemplate(dataz, broker.phone)
       }
 
       return NextResponse.json({ message: 'Selection saved successfully', insertedId: result.insertedId }, { status: 200 });
@@ -118,21 +69,120 @@ export async function POST(request: Request) {
   }
 }
 
-async function sendSimpleButtons(message: string, listOfButtons: any[], recipientPhone: string) {
+async function sendBiddingTemplate(data: any, broker: any) {
   try {
-    await Whatsapp.sendSimpleButtons({
-      message,
-      recipientPhone,
-      listOfButtons,
+    const json = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": `91${broker.phone}`,
+        "type": "template",
+        "template": {
+            "name": "broker_biddings",
+            "language": {
+                "code": "en_US"
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": data.uniqueId
+                        },
+                        {
+                            "type": "text",
+                            "text": data.datetime
+                        },
+                        {
+                            "type": "text",
+                            "text": data.fromm
+                        },
+                        {
+                            "type": "text",
+                            "text": data.to
+                        },
+                        {
+                            "type": "text",
+                            "text": data.vehicleType
+                        },
+                        {
+                            "type": "text",
+                            "text": data.totalWeight
+                        },
+                        {
+                            "type": "text",
+                            "text": data.totalVolume
+                        },
+                        {
+                            "type": "text",
+                            "text": data.loadingTime
+                        },
+                        {
+                            "type": "text",
+                            "text": data.pickupAdress
+                        },
+                        {
+                            "type": "text",
+                            "text": data.goodsQuantity
+                        },
+                        {
+                            "type": "text",
+                            "text": data.deliveryAdress
+                        },
+                        {
+                            "type": "text",
+                            "text": data.remark
+                        },
+                    ]
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "0",
+                    "parameters": [
+                        {
+                            "type": "payload",
+                            "payload": "full-day@1234567890"
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "1",
+                    "parameters": [
+                        {
+                            "type": "payload",
+                            "payload": `bid-${data.uniqueId}-${broker.brokerNo}`
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "2",
+                    "parameters": [
+                        {
+                            "type": "payload",
+                            "payload": `notavail-${data.uniqueId}-${broker.brokerNo}`
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+
+    const response = await axios.post(`https://graph.facebook.com/v21.0/${process.env.Meta_WA_SenderPhoneNumberId}/messages`, json, {
+      headers: {
+        'Authorization': `Bearer ${process.env.Meta_WA_accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
     });
+
+    console.log(response.data, "bidding template sent");
   } catch (error) {
     console.log(error, "error");
   }
 }
-
-
-// You might also want to add handlers for other HTTP methods if needed, e.g., GET, PUT, DELETE
-// export async function GET(request: Request) {}
-
-
 
