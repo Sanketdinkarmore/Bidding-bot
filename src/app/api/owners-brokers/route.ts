@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     }
 
     const client = await clientPromise;
-    const db = client.db();
+    const db = client.db('bidding-bot');
 
     // Fetch brokers from the 'broker' collection
     const brokerCollection = db.collection('broker');
@@ -54,7 +54,6 @@ export async function GET(request: Request) {
       owners,
       brokers,
     });
-
   } catch (error) {
     console.error('Error fetching owners and brokers:', error);
     return NextResponse.json(
