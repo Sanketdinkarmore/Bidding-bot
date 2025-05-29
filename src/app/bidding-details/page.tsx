@@ -35,30 +35,115 @@ export default function BiddingDetailsPage() {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc'); // Default ascending
   const [updatingBidId, setUpdatingBidId] = useState<string | null>(null); // Track which specific bid is being updated
+  const [isPolling, setIsPolling] = useState(false); // Track polling status
+  const [lastBidCount, setLastBidCount] = useState(0); // Track bid count for new bid detection
+  const [newBidsCount, setNewBidsCount] = useState(0); // Track new bids
+  const [recentBidIds, setRecentBidIds] = useState<Set<string>>(new Set()); // Track recently arrived bid IDs
+  const [isRefreshing, setIsRefreshing] = useState(false); // Track manual refresh status
+  const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null); // Track last refresh time
+
+  // Function to fetch latest bids and shipment data
+  const fetchLatestData = async (isPollingCall = false, isManualRefresh = false) => {
+    if (isPollingCall) setIsPolling(true);
+    if (isManualRefresh) setIsRefreshing(true);
+    
+    try {
+      const res = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}&timestamp=${Date.now()}`);
+      const data = await res.json();
+      
+      if (data) {
+        const newBids = data.bids || [];
+        const newBidCount = newBids.length;
+        
+        // Check for new bids and identify them
+        if ((isPollingCall || isManualRefresh) && newBidCount > lastBidCount) {
+          const newBidsFound = newBidCount - lastBidCount;
+          setNewBidsCount(prev => prev + newBidsFound);
+          
+          console.log(`📊 Bid count comparison: Previous: ${lastBidCount}, Current: ${newBidCount}, New: ${newBidsFound}`);
+          
+          // Identify new bid IDs (assuming newest bids are at the end)
+          const newBidIds = newBids.slice(-newBidsFound).map((bid: any, index: number) => 
+            getBidId(bid, newBids.length - newBidsFound + index)
+          );
+          
+          setRecentBidIds(new Set(newBidIds));
+          
+          // Clear recent bids highlighting after 10 seconds
+          setTimeout(() => {
+            setRecentBidIds(new Set());
+          }, 10000);
+          
+          // Show notification for new bids
+          console.log(`🎉 ${newBidsFound} new bid(s) received!`);
+        } else if (isPollingCall) {
+          console.log(`📊 No new bids detected. Previous: ${lastBidCount}, Current: ${newBidCount}`);
+        }
+        
+        setShipment(data);
+        setBids(newBids);
+        setLastBidCount(newBidCount);
+        setLastRefreshTime(new Date());
+        
+        if (isManualRefresh) {
+          console.log('✅ Data refreshed successfully');
+        }
+      }
+    } catch (err: any) {
+      console.error('Error fetching latest data:', err);
+      if (isManualRefresh) {
+      }
+    } finally {
+      if (isPollingCall) setIsPolling(false);
+      if (isManualRefresh) setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchShipmentAndBids = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch everything from selectedOwnerBrokers by _id
-        const res = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}`);
+        // Initial fetch - don't check for new bids on first load
+        const res = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}&timestamp=${Date.now()}`);
         const data = await res.json();
-        if (!data) {
-          setError("Shipment not found");
-          setLoading(false);
-          return;
+        
+        if (data) {
+          const newBids = data.bids || [];
+          setShipment(data);
+          setBids(newBids);
+          setLastBidCount(newBids.length); // Set initial count
+          setLastRefreshTime(new Date());
+          console.log(`🔄 Initial load: ${newBids.length} bids found`);
         }
-        setShipment(data); // Use for upper container
-        setBids(data.bids || []); // Use for bids table
       } catch (err: any) {
         setError(err.message || "Unknown error");
       } finally {
         setLoading(false);
       }
     };
-    if (shipmentId) fetchShipmentAndBids();
+    
+    if (shipmentId) {
+      fetchShipmentAndBids();
+    }
   }, [shipmentId]);
+
+  // Polling effect - runs every 30 seconds
+  useEffect(() => {
+    if (!shipmentId || loading) return; // Don't start polling until initial load is complete
+    
+    const pollInterval = setInterval(() => {
+      fetchLatestData(true); // true indicates this is a polling call
+    }, 30000); // 30 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(pollInterval);
+  }, [shipmentId, loading]); // Add loading as dependency
+
+  // Reset new bids counter when user acknowledges
+  const acknowledgeNewBids = () => {
+    setNewBidsCount(0);
+  };
 
   if (loading) {
     return <div className="flex justify-center items-center min-h-[250px] bg-gray-50 py-10">Loading...</div>;
@@ -129,24 +214,33 @@ export default function BiddingDetailsPage() {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
   };
 
-  const getRankBadge = (index: number, amount: number) => {
-    if (sortOrder === 'desc') return null; // Only show rankings when sorted ascending (lowest first)
+  const getRankBadge = (index: number, amount: number, currentBid: any) => {
+    // Always show rankings for the 3 lowest bids regardless of sort order
+    const allBidAmounts = sortedBids.map(bid => parseFloat(bid.amount) || 0).sort((a, b) => a - b);
+    const lowestThree = allBidAmounts.slice(0, 3);
+    const currentAmount = parseFloat(currentBid.amount) || 0;
+    
+    // Check if current bid is one of the 3 lowest
+    const rankIndex = lowestThree.indexOf(currentAmount);
+    if (rankIndex === -1) return null;
+    
+    // Handle ties - if there are multiple bids with same amount, only show badge for first occurrence
+    const sameAmountBids = sortedBids.filter(bid => parseFloat(bid.amount) === currentAmount);
+    const isFirstOccurrence = sameAmountBids.indexOf(currentBid) === 0;
+    if (!isFirstOccurrence) return null;
     
     const badges = [
-      { rank: '1', color: 'from-yellow-400 to-yellow-600', textColor: 'text-yellow-900', bgColor: 'bg-yellow-50', borderColor: 'border-yellow-200' },
-      { rank: '2', color: 'from-gray-300 to-gray-500', textColor: 'text-gray-900', bgColor: 'bg-gray-50', borderColor: 'border-gray-200' },
-      { rank: '3', color: 'from-amber-600 to-amber-800', textColor: 'text-amber-100', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' }
+      { rank: '1', color: 'from-yellow-400 to-yellow-600', textColor: 'text-yellow-900' },
+      { rank: '2', color: 'from-gray-300 to-gray-500', textColor: 'text-gray-900' },
+      { rank: '3', color: 'from-amber-600 to-amber-800', textColor: 'text-amber-100' }
     ];
     
-    if (index < 3) {
-      const badge = badges[index];
-      return (
-        <div className={`absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br ${badge.color} rounded-full flex items-center justify-center shadow-xl border-3 border-white text-lg font-black ${badge.textColor}`}>
-          {badge.rank}
-        </div>
-      );
-    }
-    return null;
+    const badge = badges[rankIndex];
+    return (
+      <div className={`absolute -top-3 -right-3 w-10 h-10 bg-gradient-to-br ${badge.color} rounded-full flex items-center justify-center shadow-xl border-3 border-white text-lg font-black ${badge.textColor}`}>
+        {badge.rank}
+      </div>
+    );
   };
 
   const getRowStyling = (bidId: string, bid: any) => {
@@ -155,16 +249,26 @@ export default function BiddingDetailsPage() {
       return "bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400 shadow-lg transform scale-[1.02] transition-all duration-200";
     }
     
+    // If this is a recently arrived bid, use special new bid styling
+    if (recentBidIds.has(bidId)) {
+      return "bg-gradient-to-r from-blue-50 to-indigo-100 border-2 border-blue-300 shadow-md animate-pulse transition-all duration-200";
+    }
+    
     return "hover:bg-blue-50 transition-all duration-200";
   };
 
   const handleSelectWinner = async (bidId: string, brokerName: string, amount: string) => {
     const selectedBid = bids.find(bid => getBidId(bid, bids.indexOf(bid)) === bidId);
-    if (!selectedBid) return;
+    if (!selectedBid) {
+      console.error('Selected bid not found');
+      return;
+    }
 
     setUpdatingBidId(bidId);
 
     try {
+      console.log('🔄 Attempting to select winner:', selectedBid);
+      
       const response = await fetch('/api/bid/winner', {
         method: 'POST',
         headers: {
@@ -178,30 +282,39 @@ export default function BiddingDetailsPage() {
             phone: selectedBid.phone,
             amount: selectedBid.amount
           },
+          shipmentDetails: shipment.shipmentDetails
         }),
       });
 
-      if (response.ok) {
-        const data = await response.json()
+      console.log('API Response status:', response.status);
 
-        console.log(data)
+      if (response.ok) {
+        const data = await response.json();
+        console.log('API Response data:', data);
 
         if (data.success) {
           // Refresh the shipment data to get updated selected winners
-          const refreshRes = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}`);
+          console.log('🔄 Refreshing shipment data...');
+          const refreshRes = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}&timestamp=${Date.now()}`);
           const refreshedData = await refreshRes.json();
           if (refreshedData) {
             setShipment(refreshedData);
+            console.log('✅ Shipment data refreshed successfully');
           }
+          
+          console.log(`✅ Winner selected successfully: ${brokerName} with bid ₹${amount}`);
+          
+          // Show success message
+          const successMsg = `Successfully selected ${brokerName} as winner with bid ₹${amount}.`;
+        } else {
+          console.error('❌ API returned success: false:', data.message);
         }
-        console.log(`✅ Winner selected successfully: ${brokerName} with bid ₹${amount}`);
       } else {
-        console.error('❌ Failed to select winner:', await response.text());
-        alert('Failed to select winner. Please try again.');
+        const errorText = await response.text();
+        console.error('❌ API request failed:', response.status, errorText);
       }
     } catch (error) {
-      console.error('❌ Error selecting winner:', error);
-      alert('Error selecting winner. Please check your connection and try again.');
+      console.error('❌ Network error selecting winner:', error);
     } finally {
       setUpdatingBidId(null);
     }
@@ -210,8 +323,15 @@ export default function BiddingDetailsPage() {
   const handleUnselectWinner = async (bidId: string) => {
     const winnerToRemove = bids.find(bid => getBidId(bid, bids.indexOf(bid)) === bidId);
     
+    if (!winnerToRemove) {
+      console.error('Winner to remove not found');
+      return;
+    }
+    
     setUpdatingBidId(bidId);
     try {
+      console.log('🔄 Attempting to unselect winner:', winnerToRemove);
+      
       const response = await fetch('/api/bid/winner', {
         method: 'POST',
         headers: {
@@ -225,33 +345,46 @@ export default function BiddingDetailsPage() {
             phone: winnerToRemove?.phone,
             amount: winnerToRemove?.amount
           },
+          shipmentDetails: shipment.shipmentDetails
         }),
       });
 
+      console.log('API Response status:', response.status);
+      
       if (response.ok) {
-        const data = await response.json()
-
-        console.log(data)
+        const data = await response.json();
+        console.log('API Response data:', data);
 
         if (data.success) {
           // Refresh the shipment data to get updated selected winners
-          const refreshRes = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}`);
+          console.log('🔄 Refreshing shipment data...');
+          const refreshRes = await fetch(`/api/selectedOwnerBrokers?id=${shipmentId}&timestamp=${Date.now()}`);
           const refreshedData = await refreshRes.json();
           if (refreshedData) {
             setShipment(refreshedData);
+            console.log('✅ Shipment data refreshed successfully');
           }
+          
+          console.log(`✅ Winner unselected successfully: ${winnerToRemove.brokerName}`);
+          
+        } else {
+          console.error('❌ API returned success: false:', data.message);
         }
-        console.log('✅ Winner unselected successfully');
       } else {
-        console.error('❌ Failed to unselect winner:', await response.text());
-        alert('Failed to unselect winner. Please try again.');
+        const errorText = await response.text();
+        console.error('❌ API request failed:', response.status, errorText);
       }
     } catch (error) {
-      console.error('❌ Error unselecting winner:', error);
-      alert('Error unselecting winner. Please check your connection and try again.');
+      console.error('❌ Network error unselecting winner:', error);
     } finally {
       setUpdatingBidId(null);
     }
+  };
+
+  // Manual refresh function
+  const handleManualRefresh = () => {
+    setNewBidsCount(0); // Reset new bid counter on manual refresh
+    fetchLatestData(false, true);
   };
 
   return (
@@ -265,7 +398,47 @@ export default function BiddingDetailsPage() {
             </button>
             <span className="text-lg font-semibold text-gray-800">Auction:- {shipment._id}</span>
           </div>
-          <button className="border border-blue-500 text-blue-600 font-semibold rounded px-4 py-1 hover:bg-blue-50">Bid Detail <svg className="inline ml-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg></button>
+          <div className="flex items-center gap-3">
+            {/* Refresh Button */}
+            <button 
+              onClick={handleManualRefresh}
+              disabled={isRefreshing || isPolling}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-md ${
+                isRefreshing || isPolling
+                  ? 'bg-gray-400 text-white cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg transform hover:scale-105'
+              }`}
+            >
+              <svg 
+                className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+            </button>
+            
+            {/* Last Refresh Time */}
+            {lastRefreshTime && !isRefreshing && (
+              <div className="text-xs text-gray-500">
+                <div className="flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Updated: {lastRefreshTime.toLocaleTimeString()}</span>
+                </div>
+              </div>
+            )}
+            
+            <button className="border border-blue-500 text-blue-600 font-semibold rounded px-4 py-1 hover:bg-blue-50">
+              Bid Detail 
+              <svg className="inline ml-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Flex Top Info Section */}
@@ -442,9 +615,28 @@ export default function BiddingDetailsPage() {
               <div className="text-sm">
                 <span className="font-medium text-gray-700">Selected Winners:</span>
                 <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
-                  {selectedWinnersFromAPI.length}
+                  {shipment.selectedWinners?.length || 0}
                 </span>
               </div>
+              {newBidsCount > 0 && (
+                <div className="text-sm">
+                  <button 
+                    onClick={acknowledgeNewBids}
+                    className="flex items-center gap-1 px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-semibold hover:bg-orange-200 transition-colors animate-pulse"
+                  >
+                    🆕 {newBidsCount} New Bid{newBidsCount > 1 ? 's' : ''}!
+                  </button>
+                </div>
+              )}
+              {isPolling && (
+                <div className="text-sm flex items-center gap-1 text-blue-600">
+                  <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span className="text-xs">Refreshing...</span>
+                </div>
+              )}
               {filteredBids.length > 0 && (
                 <div className="text-sm">
                   <span className="font-medium text-gray-700">Lowest Bid:</span>
@@ -538,10 +730,15 @@ export default function BiddingDetailsPage() {
                         <td className="px-6 py-6 whitespace-nowrap">
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-lg relative">
+                              {recentBidIds.has(bidId) && (
+                                <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center animate-bounce">
+                                  <span className="text-white text-xs font-bold">NEW</span>
+                                </div>
+                              )}
                               <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
-                              {getRankBadge(idx, parseFloat(bid.amount) || 0)}
+                              {getRankBadge(idx, parseFloat(bid.amount) || 0, bid)}
                               {isBidSelectedWinner(bid) && (
                                 <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
                                   <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
@@ -555,6 +752,11 @@ export default function BiddingDetailsPage() {
                             <div className="ml-4">
                               <div className="text-base font-bold text-gray-900 flex items-center gap-2">
                                 {bid.brokerName || 'Unknown Broker'}
+                                {recentBidIds.has(bidId) && (
+                                  <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-semibold rounded-full animate-pulse">
+                                    🆕 NEW BID
+                                  </span>
+                                )}
                                 {isBidSelectedWinner(bid) && (
                                   <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
                                     🏆 SELECTED WINNER
