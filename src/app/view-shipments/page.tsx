@@ -31,7 +31,7 @@ export default function ViewShipmentsPage() {
   const [shipments, setShipments] = useState<ShipmentData[]>([]);
   const [filteredShipments, setFilteredShipments] = useState<ShipmentData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('loadingDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');

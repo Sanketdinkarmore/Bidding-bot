@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 
 interface ShipmentFormData {
   numberOfPackages: number | '';
@@ -37,8 +36,8 @@ export default function CreateShipmentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [showOtherFrom, setShowOtherFrom] = useState(false);
-  const [showOtherTo, setShowOtherTo] = useState(false);
+  const [, setShowOtherFrom] = useState(false);
+  const [, setShowOtherTo] = useState(false);
   const [showOtherVehicle, setShowOtherVehicle] = useState(false);
   
   // New state for conditional city search

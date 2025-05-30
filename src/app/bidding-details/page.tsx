@@ -1,46 +1,69 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 
-interface ShipmentData {
-  _id: string;
-  numberOfPackages: number;
-  loadingDate: string;
-  loadingTime: string;
-  pickupLocation: string;
-  selectFrom: string;
-  selectTo: string;
-  vehicleType: string;
-  totalWeight?: number;
-  totalVolume?: number;
-  dropLocation: string;
-  remark?: string;
-  createdAt: string;
-  customerName?: string;
-  material?: string;
-  minimumBids?: string;
-  bidToleranceAmount?: string;
-  refPrice?: string;
-  orderInfo?: string;
-}
+// interface ShipmentData {
+//   _id: string;
+//   numberOfPackages: number;
+//   loadingDate: string;
+//   loadingTime: string;
+//   pickupLocation: string;
+//   selectFrom: string;
+//   selectTo: string;
+//   vehicleType: string;
+//   totalWeight?: number;
+//   totalVolume?: number;
+//   dropLocation: string;
+//   remark?: string;
+//   createdAt: string;
+//   customerName?: string;
+//   material?: string;
+//   minimumBids?: string;
+//   bidToleranceAmount?: string;
+//   refPrice?: string;
+//   orderInfo?: string;
+// }
 
-export default function BiddingDetailsPage() {
+function BiddingDetailsContent() {
   const searchParams = useSearchParams();
   const shipmentId = searchParams.get("id");
   const [shipment, setShipment] = useState<any | null>(null);
   const [bids, setBids] = useState<any[]>([]);
+  const [, setPreviousBids] = useState<any[]>([]); // Track previous bids for comparison
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc'); // Default ascending
   const [updatingBidId, setUpdatingBidId] = useState<string | null>(null); // Track which specific bid is being updated
   const [isPolling, setIsPolling] = useState(false); // Track polling status
-  const [lastBidCount, setLastBidCount] = useState(0); // Track bid count for new bid detection
   const [newBidsCount, setNewBidsCount] = useState(0); // Track new bids
   const [recentBidIds, setRecentBidIds] = useState<Set<string>>(new Set()); // Track recently arrived bid IDs
   const [isRefreshing, setIsRefreshing] = useState(false); // Track manual refresh status
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null); // Track last refresh time
+
+  // Function to create a unique identifier for a bid
+  // const createBidIdentifier = (bid: any) => {
+  //   // Create a comprehensive identifier using phone, amount, brokerName, and timestamp
+  //   const timestamp = bid.timestamp || bid.createdAt || 'no-timestamp';
+  //   return `${bid.phone || 'unknown'}-${bid.amount || '0'}-${bid.brokerName || 'unknown'}-${timestamp}`;
+  // };
+
+  // // Function to find new bids by comparing with previous bids
+  // const findNewBids = (currentBids: any[], previousBids: any[]) => {
+  //   const previousBidIdentifiers = new Set(
+  //     previousBids.map(bid => createBidIdentifier(bid))
+  //   );
+    
+  //   return currentBids.filter(bid => 
+  //     !previousBidIdentifiers.has(createBidIdentifier(bid))
+  //   );
+  // };
+
+  // Create consistent unique IDs for bids
+  const getBidId = (bid: any, originalIndex: number) => {
+    return bid._id || bid.id || `${bid.phone}-${bid.amount}-${bid.timestamp}` || `bid-${originalIndex}`;
+  };
 
   // Function to fetch latest bids and shipment data
   const fetchLatestData = async (isPollingCall = false, isManualRefresh = false) => {
@@ -52,37 +75,59 @@ export default function BiddingDetailsPage() {
       const data = await res.json();
       
       if (data) {
-        const newBids = data.bids || [];
-        const newBidCount = newBids.length;
+        // const newBids = data.bids || [];
+
+        setShipment(data)
         
-        // Check for new bids and identify them
-        if ((isPollingCall || isManualRefresh) && newBidCount > lastBidCount) {
-          const newBidsFound = newBidCount - lastBidCount;
-          setNewBidsCount(prev => prev + newBidsFound);
+        // Check for new bids by comparing with previous bids
+        // if ((isPollingCall || isManualRefresh) && previousBids.length > 0) {
+        //   const actualNewBids = findNewBids(newBids, previousBids);
           
-          console.log(`📊 Bid count comparison: Previous: ${lastBidCount}, Current: ${newBidCount}, New: ${newBidsFound}`);
+        //   console.log('🔄 Polling Debug Info:', {
+        //     isPollingCall,
+        //     isManualRefresh,
+        //     previousBidsCount: previousBids.length,
+        //     currentBidsCount: newBids.length,
+        //     newBidsFound: actualNewBids.length,
+        //     previousBidIdentifiers: previousBids.map((bid: any) => createBidIdentifier(bid)),
+        //     currentBidIdentifiers: newBids.map((bid: any) => createBidIdentifier(bid)),
+        //     newBidIdentifiers: actualNewBids.map((bid: any) => createBidIdentifier(bid))
+        //   });
           
-          // Identify new bid IDs (assuming newest bids are at the end)
-          const newBidIds = newBids.slice(-newBidsFound).map((bid: any, index: number) => 
-            getBidId(bid, newBids.length - newBidsFound + index)
-          );
-          
-          setRecentBidIds(new Set(newBidIds));
-          
-          // Clear recent bids highlighting after 10 seconds
-          setTimeout(() => {
-            setRecentBidIds(new Set());
-          }, 10000);
-          
-          // Show notification for new bids
-          console.log(`🎉 ${newBidsFound} new bid(s) received!`);
-        } else if (isPollingCall) {
-          console.log(`📊 No new bids detected. Previous: ${lastBidCount}, Current: ${newBidCount}`);
-        }
+        //   if (actualNewBids.length > 0) {
+        //     setNewBidsCount(prev => prev + actualNewBids.length);
+            
+        //     console.log(`📊 Bid comparison: Previous bids: ${previousBids.length}, Current bids: ${newBids.length}, New bids found: ${actualNewBids.length}`);
+        //     console.log('🆕 New bids detected:', actualNewBids.map(bid => `${bid.brokerName} - ₹${bid.amount}`));
+            
+        //     // Generate IDs for new bids and mark them as recent
+        //     const newBidIds = actualNewBids.map((bid: any, index: number) => 
+        //       getBidId(bid, newBids.indexOf(bid))
+        //     );
+            
+        //     setRecentBidIds(new Set(newBidIds));
+            
+        //     // Clear recent bids highlighting after 10 seconds
+        //     setTimeout(() => {
+        //       setRecentBidIds(new Set());
+        //     }, 10000);
+            
+        //     // Show notification for new bids
+        //     console.log(`🎉 ${actualNewBids.length} new bid(s) received!`);
+        //   } else {
+        //     console.log(`📊 No new bids detected. Previous: ${previousBids.length}, Current: ${newBids.length}`);
+        //   }
+        // }
         
-        setShipment(data);
-        setBids(newBids);
-        setLastBidCount(newBidCount);
+        // Update state with latest data
+        // setShipment(data);
+        setBids(data.bids);
+        
+        // // Update previous bids only if we have new data
+        // if (newBids.length > 0) {
+        //   setPreviousBids(newBids);
+        // }
+        
         setLastRefreshTime(new Date());
         
         if (isManualRefresh) {
@@ -112,7 +157,7 @@ export default function BiddingDetailsPage() {
           const newBids = data.bids || [];
           setShipment(data);
           setBids(newBids);
-          setLastBidCount(newBids.length); // Set initial count
+          setPreviousBids(newBids);
           setLastRefreshTime(new Date());
           console.log(`🔄 Initial load: ${newBids.length} bids found`);
         }
@@ -134,11 +179,11 @@ export default function BiddingDetailsPage() {
     
     const pollInterval = setInterval(() => {
       fetchLatestData(true); // true indicates this is a polling call
-    }, 30000); // 30 seconds
+    }, 5000); // 30 seconds
 
     // Cleanup interval on component unmount
     return () => clearInterval(pollInterval);
-  }, [shipmentId, loading]); // Add loading as dependency
+  }, [shipmentId, loading]); // Only depend on shipmentId and loading
 
   // Reset new bids counter when user acknowledges
   const acknowledgeNewBids = () => {
@@ -163,9 +208,9 @@ export default function BiddingDetailsPage() {
   };
 
   // Get bid IDs of selected winners for compatibility with existing code
-  const selectedWinners = bids
-    .filter(bid => isBidSelectedWinner(bid))
-    .map((bid, index) => getBidId(bid, bids.indexOf(bid)));
+  // const selectedWinners = bids
+  //   .filter(bid => isBidSelectedWinner(bid))
+  //   .map((bid) => getBidId(bid, bids.indexOf(bid)));
 
   // Mock extra fields for top section
   const customerName = shipment.customerName || "HINDUSTAN PETROLEUM CORPORATION LIMITED";
@@ -204,11 +249,6 @@ export default function BiddingDetailsPage() {
     const amountB = parseFloat(b.amount) || 0;
     return sortOrder === 'asc' ? amountA - amountB : amountB - amountA;
   });
-
-  // Create consistent unique IDs for bids
-  function getBidId(bid: any, originalIndex: number)  {
-    return bid._id || bid.id || `${bid.phone}-${bid.amount}-${bid.timestamp}` || `bid-${originalIndex}`;
-  };
 
   const toggleSortOrder = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
@@ -304,8 +344,6 @@ export default function BiddingDetailsPage() {
           
           console.log(`✅ Winner selected successfully: ${brokerName} with bid ₹${amount}`);
           
-          // Show success message
-          const successMsg = `Successfully selected ${brokerName} as winner with bid ₹${amount}.`;
         } else {
           console.error('❌ API returned success: false:', data.message);
         }
@@ -384,6 +422,7 @@ export default function BiddingDetailsPage() {
   // Manual refresh function
   const handleManualRefresh = () => {
     setNewBidsCount(0); // Reset new bid counter on manual refresh
+    setRecentBidIds(new Set()); // Clear recent bid highlights
     fetchLatestData(false, true);
   };
 
@@ -866,5 +905,13 @@ export default function BiddingDetailsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BiddingDetailsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <BiddingDetailsContent />
+    </Suspense>
   );
 }

@@ -26,8 +26,8 @@ export async function GET(request: Request) {
     }).toArray();
 
     // Extract unique owners and brokers from the matching bidding_info documents
-    let owners: any[] = [];
-    let brokers: any[] = [];
+    const owners: any[] = [];
+    const brokers: any[] = [];
     biddingInfo.forEach(doc => {
       if (doc.selectedOwners && Array.isArray(doc.selectedOwners)) {
         owners.push(...doc.selectedOwners);
