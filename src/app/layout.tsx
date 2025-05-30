@@ -3,7 +3,8 @@
 import './globals.css';
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "./Navbar";
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,8 +21,19 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const pathname = usePathname();
   const isAuthPage = pathname === '/login' || pathname === '/register';
+
+  useEffect(() => {
+    if (isAuthPage) return;
+    if (typeof window !== 'undefined') {
+      const user = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (!user) {
+        router.replace('/login');
+      }
+    }
+  }, [pathname, router, isAuthPage]);
 
   return (
     <html lang="en">
