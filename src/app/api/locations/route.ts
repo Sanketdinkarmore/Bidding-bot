@@ -11,15 +11,24 @@ export async function GET() {
     
     // Extract unique locations and vehicle types from the fetched data
     // Map locations to include id and name
-    const locations = Array.from(new Set(locationAndVehicleData.map(item => JSON.stringify({
-      id: item._id, // Include the unique MongoDB _id
+    // const locations = Array.from(new Set(locationAndVehicleData.map(item => JSON.stringify({
+    //   id: item._id, // Include the unique MongoDB _id
+    //   name: item['CITIES NAME']
+    // })).filter(item => JSON.parse(item).name))).map(item => JSON.parse(item));
+
+    const locations = locationAndVehicleData.map(item => ({
+      id: item._id,
       name: item['CITIES NAME']
-    })).filter(item => JSON.parse(item).name))).map(item => JSON.parse(item));
+    }));
+
+    const uniqueLocations = locations.filter((location, index, self) =>
+      index === self.findIndex((t) => t.name === location.name)
+    );
 
     const vehicleTypes = Array.from(new Set(locationAndVehicleData.map(item => item['VEHICLE TYPE']).filter(name => name)));
     
     return NextResponse.json({
-      locations: locations,
+      locations: uniqueLocations,
       vehicleTypes: vehicleTypes
     });
   } catch (error) {
