@@ -179,7 +179,7 @@ function BiddingDetailsContent() {
     
     const pollInterval = setInterval(() => {
       fetchLatestData(true); // true indicates this is a polling call
-    }, 5000); // 30 seconds
+    }, 45000); // 30 seconds
 
     // Cleanup interval on component unmount
     return () => clearInterval(pollInterval);
@@ -238,11 +238,11 @@ function BiddingDetailsContent() {
         : 'N/A';
 
   // Filter and sort bids
-  const filteredBids = bids.filter(bid => 
+  const filteredBids = Array.isArray(bids) ? bids.filter(bid => 
     String(bid.phone)?.toLowerCase().includes(search.toLowerCase()) ||
     bid.brokerName?.toLowerCase().includes(search.toLowerCase()) ||
     String(bid.amount)?.toLowerCase().includes(search.toLowerCase())
-  );
+  ) : [];
 
   const sortedBids = [...filteredBids].sort((a, b) => {
     const amountA = parseFloat(a.amount) || 0;
@@ -572,7 +572,7 @@ function BiddingDetailsContent() {
             )}
           </div>
           <div className="text-sm text-gray-600">
-            Showing <span className="font-semibold">{sortedBids.length}</span> of <span className="font-semibold">{bids.length}</span> bids
+            Showing <span className="font-semibold">{sortedBids.length}</span> of <span className="font-semibold">{bids?.length}</span> bids
           </div>
         </div>
 
@@ -695,7 +695,7 @@ function BiddingDetailsContent() {
             </div>
           </div>
           
-          {bids.length === 0 ? (
+          {bids?.length === 0 ? (
             <div className="text-center py-12">
               <div className="flex flex-col items-center">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
