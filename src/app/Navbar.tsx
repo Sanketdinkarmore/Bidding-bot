@@ -1,4 +1,5 @@
 "use client";
+import Image from 'next/image';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -10,9 +11,10 @@ export default function Navbar() {
         <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex flex-1">
-              <div className="flex-shrink-0 flex items-center">
+              <div className="flex-shrink-0 flex items-center gap-x-2">
+                <Image  src="/agarwal-packers-logo.png" width={50} height={50} alt='logo' />
                 <Link href="/" className="text-xl font-bold text-blue-600">
-                  Bidding Bot
+                  Apml Bidding Bot
                 </Link>
               </div>
               <div className="hidden sm:ml-8 sm:flex sm:flex-1 sm:justify-center sm:space-x-12">
