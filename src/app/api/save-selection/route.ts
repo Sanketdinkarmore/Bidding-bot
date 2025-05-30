@@ -16,6 +16,10 @@ export async function POST(request: Request) {
 
     const result = await collection.insertOne({
       ...selectionData,
+      shipmentDetails: {
+        ...selectionData.shipmentDetails,
+        bidClosingDateTime: new Date(selectionData.shipmentDetails.bidClosingDateTime),
+      },
       uniqueId,
       createdAt: new Date(),
     });
@@ -23,8 +27,11 @@ export async function POST(request: Request) {
     if (result.acknowledged) {
       const matchingBrokers = [...selectionData.selectedOwners, ...selectionData.selectedBrokers];
 
-      const dateObjectt = Number(selectionData.shipmentDetails.loadingDate);
+      console.log(selectionData, "selectionData")
+
+      const dateObjectt = selectionData.shipmentDetails.loadingDate;
       const dateObject = new Date(dateObjectt);
+
       const day = dateObject.getDate();
       const month = dateObject.getMonth() + 1;
       const year = dateObject.getFullYear();
@@ -74,7 +81,7 @@ async function sendBiddingTemplate(data: any, broker: any) {
     const json = {
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
-        "to": `91${broker.phone}`,
+        "to": `91${broker}`,
         "type": "template",
         "template": {
             "name": "broker_biddings",
@@ -87,7 +94,7 @@ async function sendBiddingTemplate(data: any, broker: any) {
                     "parameters": [
                         {
                             "type": "text",
-                            "text": data.uniqueId
+                            "text": data.uniqueId.toString() ?? "-"
                         },
                         {
                             "type": "text",
@@ -107,11 +114,11 @@ async function sendBiddingTemplate(data: any, broker: any) {
                         },
                         {
                             "type": "text",
-                            "text": data.totalWeight
+                            "text": data.totalWeight === "" ? "-" : data.totalWeight
                         },
                         {
                             "type": "text",
-                            "text": data.totalVolume
+                            "text": data.totalVolume === "" ? "-" : data.totalVolume
                         },
                         {
                             "type": "text",
@@ -123,7 +130,7 @@ async function sendBiddingTemplate(data: any, broker: any) {
                         },
                         {
                             "type": "text",
-                            "text": data.goodsQuantity
+                            "text": data.goodsQuantity === "" ? "-" : data.goodsQuantity
                         },
                         {
                             "type": "text",
@@ -131,7 +138,7 @@ async function sendBiddingTemplate(data: any, broker: any) {
                         },
                         {
                             "type": "text",
-                            "text": data.remark
+                            "text": data.remark === "" ? "-" : data.remark
                         },
                     ]
                 },
@@ -142,7 +149,7 @@ async function sendBiddingTemplate(data: any, broker: any) {
                     "parameters": [
                         {
                             "type": "payload",
-                            "payload": "full-day@1234567890"
+                            "payload": `bid-${data.uniqueId}`
                         }
                     ]
                 },
@@ -153,36 +160,23 @@ async function sendBiddingTemplate(data: any, broker: any) {
                     "parameters": [
                         {
                             "type": "payload",
-                            "payload": `bid-${data.uniqueId}-${broker.brokerNo}`
+                            "payload": `notbid-${data.uniqueId}`
                         }
                     ]
                 },
-                {
-                    "type": "button",
-                    "sub_type": "quick_reply",
-                    "index": "2",
-                    "parameters": [
-                        {
-                            "type": "payload",
-                            "payload": `notavail-${data.uniqueId}-${broker.brokerNo}`
-                        }
-                    ]
-                }
             ]
         }
     }
 
     const response = await axios.post(`https://graph.facebook.com/v21.0/${process.env.Meta_WA_SenderPhoneNumberId}/messages`, json, {
       headers: {
-        'Authorization': `Bearer ${process.env.Meta_WA_accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Authorization': `Bearer ${process.env.Meta_WA_accessToken}`
       }
     });
 
     console.log(response.data, "bidding template sent");
-  } catch (error) {
-    console.log(error, "error");
+  } catch (error: any) {
+    console.log(error?.response?.data, "error");
   }
 }
 

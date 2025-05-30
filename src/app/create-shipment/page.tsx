@@ -14,9 +14,34 @@ interface ShipmentFormData {
   totalVolume: number | '';
   dropLocation: string;
   remark: string;
+  bidClosingDate: string;
+  bidClosingTime: string;
 }
 
 export default function CreateShipmentPage() {
+  // Helper function to get default bid closing date (current date + 30 minutes)
+  const getDefaultBidClosingDate = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper function to get default bid closing time (current time + 30 minutes)
+  const getDefaultBidClosingTime = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30);
+    
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    return `${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState<ShipmentFormData>({
     numberOfPackages: '',
     loadingDate: '',
@@ -29,6 +54,8 @@ export default function CreateShipmentPage() {
     totalVolume: '',
     dropLocation: '',
     remark: '',
+    bidClosingDate: getDefaultBidClosingDate(),
+    bidClosingTime: getDefaultBidClosingTime(),
   });
   const [locations, setLocations] = useState<{ id: string, name: string }[]>([]);
   const [vehicleTypes, setVehicleTypes] = useState<string[]>([]);
@@ -60,8 +87,8 @@ export default function CreateShipmentPage() {
 
   // New state for owner/broker selection
   const [showOwnerBrokerSelection, setShowOwnerBrokerSelection] = useState(false);
-  const [availableOwners, setAvailableOwners] = useState<{ id: string, name: string, amount: any }[]>([]);
-  const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amount: any }[]>([]);
+  const [availableOwners, setAvailableOwners] = useState<{ id: string, name: string, amounts: any }[]>([]);
+  const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amounts: any }[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]); // Store owner IDs
   const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]); // Store broker IDs
   const [isFetchingOwnersBrokers, setIsFetchingOwnersBrokers] = useState(false);
@@ -241,7 +268,7 @@ export default function CreateShipmentPage() {
       const fromCity = selectedFromCity || formData.selectFrom;
       const toCity = selectedToCity || formData.selectTo;
       const vehicleType = formData.vehicleType;
-      console.log('fetchOwnersAndBrokers params:', fromCity, toCity, vehicleType);
+
       if (!fromCity || !toCity || !vehicleType) {
         setError('Could not fetch owners and brokers: Missing city or vehicle type.');
         return;
@@ -259,14 +286,18 @@ export default function CreateShipmentPage() {
   // Function to fetch owners and brokers
   const fetchOwnersAndBrokers = async (fromCity: string, toCity: string, vehicleType: string) => {
     setIsFetchingOwnersBrokers(true);
+
     try {
       const response = await fetch(`/api/create-shipment-owners-brokers?fromCity=${fromCity}&toCity=${toCity}&vehicleType=${vehicleType}`);
       if (!response.ok) {
         throw new Error('Failed to fetch owners and brokers');
       }
+
       const data = await response.json();
+
       setAvailableOwners(data.owners);
       setAvailableBrokers(data.brokers);
+      
       setShowOwnerBrokerSelection(true); // Show the selection section
     } catch (error) {
       console.error('Error fetching owners and brokers:', error);
@@ -280,16 +311,28 @@ export default function CreateShipmentPage() {
 
   // Handle owner checkbox change
   const handleOwnerChange = (ownerId: string) => {
-    setSelectedOwners(prev =>
-      prev.includes(ownerId) ? prev.filter(id => id !== ownerId) : [...prev, ownerId]
-    );
+    console.log('Owner change triggered for ID:', ownerId);
+    setSelectedOwners(prev => {
+      const isCurrentlySelected = prev.includes(ownerId);
+      const newSelection = isCurrentlySelected 
+        ? prev.filter(id => id !== ownerId) 
+        : [...prev, ownerId];
+      console.log('Previous owners:', prev, 'New owners:', newSelection);
+      return newSelection;
+    });
   };
 
   // Handle broker checkbox change
   const handleBrokerChange = (brokerId: string) => {
-    setSelectedBrokers(prev =>
-      prev.includes(brokerId) ? prev.filter(id => id !== brokerId) : [...prev, brokerId]
-    );
+    console.log('Broker change triggered for ID:', brokerId);
+    setSelectedBrokers(prev => {
+      const isCurrentlySelected = prev.includes(brokerId);
+      const newSelection = isCurrentlySelected 
+        ? prev.filter(id => id !== brokerId) 
+        : [...prev, brokerId];
+      console.log('Previous brokers:', prev, 'New brokers:', newSelection);
+      return newSelection;
+    });
   };
 
   // Handle final submission after selecting owners/brokers (Optional - depends on your flow)
@@ -312,6 +355,7 @@ export default function CreateShipmentPage() {
           loadingDate: formData.loadingDate,
           loadingTime: formData.loadingTime,
           remark: formData.remark,
+          bidClosingDateTime: new Date(`${formData.bidClosingDate}T${formData.bidClosingTime}`),
         },
         selectedOwners: availableOwners.filter(owner => selectedOwners.includes(owner.id)),
         selectedBrokers: availableBrokers.filter(broker => selectedBrokers.includes(broker.id)),
@@ -324,6 +368,7 @@ export default function CreateShipmentPage() {
       });
 
       if (!response.ok) throw new Error('Failed to save selection');
+
       setSuccess('Selection saved successfully!');
       // Now clear formData and related state after everything is done
       setFormData({
@@ -338,6 +383,8 @@ export default function CreateShipmentPage() {
         totalVolume: '',
         dropLocation: '',
         remark: '',
+        bidClosingDate: getDefaultBidClosingDate(),
+        bidClosingTime: getDefaultBidClosingTime(),
       });
       setShowOtherFrom(false);
       setShowOtherTo(false);
@@ -363,13 +410,9 @@ export default function CreateShipmentPage() {
     }
   };
 
-  // Define number of initial locations to show
-  const initialLocationsCount = 7;
-  const initialLocations = locations.slice(0, initialLocationsCount);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
           {/* Form Header */}
           <div className="relative px-8 py-8 bg-gradient-to-r from-blue-600 to-indigo-600">
@@ -897,9 +940,9 @@ export default function CreateShipmentPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
-                    <h2 className="text-xl font-bold text-gray-800">Loading Details</h2>
+                    <h2 className="text-xl font-bold text-gray-800">Loading & Bidding Details</h2>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="space-y-2">
                       <label htmlFor="loadingDate" className="flex items-center text-sm font-semibold text-gray-700">
                         <span className="text-red-500 mr-1">*</span>
@@ -934,6 +977,54 @@ export default function CreateShipmentPage() {
                         required
                       />
                     </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-semibold text-gray-700">
+                        <span className="text-red-500 mr-1">*</span>
+                        <svg className="w-4 h-4 mr-1 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Bid Closing Date & Time
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label htmlFor="bidClosingDate" className="text-xs text-gray-600 mb-1 block">Date</label>
+                          <input
+                            type="date"
+                            name="bidClosingDate"
+                            id="bidClosingDate"
+                            value={formData.bidClosingDate}
+                            onChange={handleChange}
+                            className="block w-full px-3 py-2 bg-white rounded-lg border-2 border-gray-200 shadow-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-200 text-gray-900 font-medium text-sm"
+                            required
+                            min={(() => {
+                              const now = new Date();
+                              const year = now.getFullYear();
+                              const month = String(now.getMonth() + 1).padStart(2, '0');
+                              const day = String(now.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                            })()}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="bidClosingTime" className="text-xs text-gray-600 mb-1 block">Time</label>
+                          <input
+                            type="time"
+                            name="bidClosingTime"
+                            id="bidClosingTime"
+                            value={formData.bidClosingTime}
+                            onChange={handleChange}
+                            className="block w-full px-3 py-2 bg-white rounded-lg border-2 border-gray-200 shadow-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-100 transition-all duration-200 text-gray-900 font-medium text-sm"
+                            required
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-orange-600 mt-1 flex items-center">
+                        <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Default is 30 minutes from now
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -950,7 +1041,7 @@ export default function CreateShipmentPage() {
                   <div className="space-y-2">
                     <label htmlFor="remark" className="flex items-center text-sm font-semibold text-gray-700">
                       <svg className="w-4 h-4 mr-1 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                       Remarks & Special Instructions
                     </label>
@@ -1007,101 +1098,251 @@ export default function CreateShipmentPage() {
               </form>
             ) : (
               <div className="space-y-6">
-                <h2 className="text-xl font-bold text-gray-900">Select Owners and Brokers</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Owners and Brokers</h2>
+                  <p className="text-gray-600">Choose from available owners and brokers for your shipment route</p>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                   {/* Owners List */}
-                  <div className="bg-neutral-50 rounded-xl p-4 border border-gray-100 shadow">
-                    <h3 className="text-md font-semibold mb-2 text-gray-800">Owners</h3>
-                    {isFetchingOwnersBrokers ? (
-                      <div className="flex items-center justify-center py-4">
-                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100 shadow-lg">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-3 bg-blue-100 rounded-xl">
+                        <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        <span className="ml-2">Loading owners...</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">Vehicle Owners</h3>
+                        <p className="text-sm text-blue-600">Select owners to notify about this shipment</p>
+                      </div>
+                    </div>
+                    
+                    {isFetchingOwnersBrokers ? (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="relative">
+                          <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-700 font-medium">Loading owners...</p>
+                          <p className="text-sm text-gray-500">Finding available vehicle owners</p>
+                        </div>
                       </div>
                     ) : availableOwners.length === 0 ? (
-                      <p className="text-gray-500">No owners found for this route/vehicle.</p>
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-2.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 009.586 13H7" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-700 mb-2">No Owners Found</h4>
+                        <p className="text-gray-500">No vehicle owners available for this route and vehicle type.</p>
+                      </div>
                     ) : (
-                      <ul className="space-y-2 ">
+                      <div className="space-y-3">
+                        <div className="text-sm text-gray-600 mb-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                          <svg className="w-4 h-4 inline mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Amounts shown are average rates for this route
+                        </div>
                         {availableOwners.map(owner => (
-                          <li key={owner.id} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`owner-${owner.id}`}
-                              checked={selectedOwners.includes(owner.id)}
-                              onChange={() => handleOwnerChange(owner.id)}
-                              className="mr-2"
-                            />
-                            <label htmlFor={`owner-${owner.id}`} className="flex-1 text-gray-900">
-                              {owner.name} {owner.amount && <span className="text-xs text-gray-800">({owner.amount})</span>}
-                            </label>
-                          </li>
+                          <div key={owner.id} className="group">
+                            <div 
+                              onClick={() => handleOwnerChange(owner.id)}
+                              className={`flex items-center p-4 bg-white rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                                selectedOwners.includes(owner.id) 
+                                  ? 'border-blue-400 bg-blue-50 shadow-md' 
+                                  : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                              }`}
+                            >
+                              <div className="flex items-center flex-1">
+                                <input
+                                  type="checkbox"
+                                  id={`owner-${owner.id}`}
+                                  checked={selectedOwners.includes(owner.id)}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    // Don't handle the change here since the parent div handles it
+                                  }}
+                                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 mr-4 pointer-events-none"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className={`font-semibold transition-colors ${
+                                      selectedOwners.includes(owner.id) 
+                                        ? 'text-blue-700' 
+                                        : 'text-gray-900 group-hover:text-blue-700'
+                                    }`}>
+                                      {owner.name}
+                                    </h4>
+                                    {owner.amounts && (
+                                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                        selectedOwners.includes(owner.id)
+                                          ? 'bg-blue-200 text-blue-800'
+                                          : 'bg-blue-100 text-blue-700'
+                                      }`}>
+                                        ₹{Math.floor(parseFloat(owner.amounts)).toLocaleString('en-IN')} avg
+                                      </div>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-500 mt-1">Vehicle Owner</p>
+                                </div>
+                              </div>
+                              <div className={`ml-4 transition-colors ${
+                                selectedOwners.includes(owner.id)
+                                  ? 'text-blue-600'
+                                  : 'text-blue-400 group-hover:text-blue-600'
+                              }`}>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     )}
                   </div>
 
                   {/* Brokers List */}
-                  <div className="bg-neutral-50 rounded-xl p-4 border border-gray-100 shadow">
-                    <h3 className="text-md font-semibold mb-2 text-gray-800">Brokers</h3>
-                    {isFetchingOwnersBrokers ? (
-                      <div className="flex items-center justify-center py-4">
-                        <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-100 shadow-lg">
+                    <div className="flex items-center space-x-3 mb-6">
+                      <div className="p-3 bg-green-100 rounded-xl">
+                        <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2-2v2m8 0V6a2 2 0 012 2v6a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2V6" />
                         </svg>
-                        <span className="ml-2">Loading brokers...</span>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">Transport Brokers</h3>
+                        <p className="text-sm text-green-600">Select brokers to receive this shipment</p>
+                      </div>
+                    </div>
+                    
+                    {isFetchingOwnersBrokers ? (
+                      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                        <div className="relative">
+                          <div className="w-12 h-12 border-4 border-green-200 border-t-green-600 rounded-full animate-spin"></div>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-gray-700 font-medium">Loading brokers...</p>
+                          <p className="text-sm text-gray-500">Finding available transport brokers</p>
+                        </div>
                       </div>
                     ) : availableBrokers.length === 0 ? (
-                      <p className="text-gray-500">No brokers found for this route/vehicle.</p>
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                          </svg>
+                        </div>
+                        <h4 className="text-lg font-semibold text-gray-700 mb-2">No Brokers Found</h4>
+                        <p className="text-gray-500">No transport brokers available for this route and vehicle type.</p>
+                      </div>
                     ) : (
-                      <ul className="space-y-2">
+                      <div className="space-y-3">
+                        <div className="text-sm text-gray-600 mb-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                          <svg className="w-4 h-4 inline mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Amounts shown are average rates for this route
+                        </div>
                         {availableBrokers.map(broker => (
-                          <li key={broker.id} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              id={`broker-${broker.id}`}
-                              checked={selectedBrokers.includes(broker.id)}
-                              onChange={() => handleBrokerChange(broker.id)}
-                              className="mr-2"
-                            />
-                            <label htmlFor={`broker-${broker.id}`} className="flex-1 text-gray-900">
-                              {broker.name} {broker.amount && <span className="text-xs text-gray-800">({broker.amount})</span>}
-                            </label>
-                          </li>
+                          <div key={broker.id} className="group">
+                            <div 
+                              onClick={() => handleBrokerChange(broker.id)}
+                              className={`flex items-center p-4 bg-white rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+                                selectedBrokers.includes(broker.id) 
+                                  ? 'border-green-400 bg-green-50 shadow-md' 
+                                  : 'border-gray-200 hover:border-green-300 hover:bg-green-50'
+                              }`}
+                            >
+                              <div className="flex items-center flex-1">
+                                <input
+                                  type="checkbox"
+                                  id={`broker-${broker.id}`}
+                                  checked={selectedBrokers.includes(broker.id)}
+                                  onChange={(e) => {
+                                    e.stopPropagation();
+                                    // Don't handle the change here since the parent div handles it
+                                  }}
+                                  className="w-5 h-5 text-green-600 bg-white border-2 border-gray-300 rounded focus:ring-green-500 focus:ring-2 mr-4 pointer-events-none"
+                                />
+                                <div className="flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className={`font-semibold transition-colors ${
+                                      selectedBrokers.includes(broker.id) 
+                                        ? 'text-green-700' 
+                                        : 'text-gray-900 group-hover:text-green-700'
+                                    }`}>
+                                      {broker.name}
+                                    </h4>
+                                    {broker.amounts && (
+                                      <div className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                        selectedBrokers.includes(broker.id)
+                                          ? 'bg-green-200 text-green-800'
+                                          : 'bg-green-100 text-green-700'
+                                      }`}>
+                                        ₹{Math.floor(parseFloat(broker.amounts)).toLocaleString('en-IN')} avg
+                                      </div>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-gray-500 mt-1">Transport Broker</p>
+                                </div>
+                              </div>
+                              <div className={`ml-4 transition-colors ${
+                                selectedBrokers.includes(broker.id)
+                                  ? 'text-green-600'
+                                  : 'text-green-400 group-hover:text-green-600'
+                              }`}>
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
                         ))}
-                      </ul>
+                      </div>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t border-gray-100">
+                
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row justify-end gap-4 pt-8 border-t-2 border-gray-100">
                   <button
                     type="button"
                     onClick={() => setShowOwnerBrokerSelection(false)}
-                    className="px-5 py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
+                    className="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 rounded-xl text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-4 focus:ring-gray-100 transition-all duration-200 shadow-sm"
                     disabled={isSubmitting}
                   >
-                    Back
+                    <svg className="w-5 h-5 mr-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                    Back to Form
                   </button>
                   <button
                     type="button"
                     onClick={handleOwnerBrokerSubmit}
-                    className={`inline-flex items-center px-5 py-2 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition ${
-                      isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                    className={`inline-flex items-center justify-center px-8 py-3 border-2 border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all duration-200 transform hover:scale-105 ${
+                      isSubmitting ? 'opacity-70 cursor-not-allowed scale-100' : ''
                     }`}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? (
                       <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Saving...
+                        Saving Selection...
                       </>
                     ) : (
-                      'Save Selection'
+                      <>
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Selection
+                      </>
                     )}
                   </button>
                 </div>
