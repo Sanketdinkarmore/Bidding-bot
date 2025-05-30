@@ -317,67 +317,53 @@ export default function CreateShipmentPage() {
   const initialLocations = locations.slice(0, initialLocationsCount);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="min-h-screen bg-neutral-100 flex items-center justify-center py-8">
+      <main className="w-full max-w-4xl px-2 sm:px-0">
+        <div className="bg-white/90 rounded-2xl shadow-2xl border border-gray-200 p-1 sm:p-2">
           {/* Form Header */}
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-gray-900">Create New Shipment Booking</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Fill in the details below to create a new shipment booking.
-            </p>
+          <div className="px-12 py-7 border-b border-gray-100 bg-white rounded-t-2xl">
+            <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-1">Create New Shipment Booking</h1>
+            <p className="text-base text-gray-500">Fill in the details below to create a new shipment booking.</p>
           </div>
 
           {/* Form Content */}
-          <div className="px-6 py-4">
+          <div className="px-12 py-7">
             {error && (
-              <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-400 rounded-md">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-red-700">{error}</p>
-                  </div>
-                </div>
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-3">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-red-700 font-medium">{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="mb-6 p-4 bg-green-50 border-l-4 border-green-400 rounded-md">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-green-700">{success}</p>
-                  </div>
-                </div>
+              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-green-700 font-medium">{success}</span>
               </div>
             )}
 
             {!showOwnerBrokerSelection ? (
               // Initial Shipment Creation Form
-              <form onSubmit={handleSubmit} className="space-y-10">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Location Details Section */}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Location Details</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <section className="bg-neutral-50 rounded-xl p-6 shadow border border-gray-100 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Location Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                     {/* From City */}
-                    <div>
-                      <label htmlFor="selectFrom" className="block text-sm font-medium text-gray-700">From City</label>
-                      <div className="mt-1 relative">
+                    <div className="col-span-1">
+                      <label htmlFor="selectFrom" className="block text-sm font-medium text-gray-700 mb-1">From City</label>
+                      <div className="relative">
                         {!showFromCitySearch ? (
                           <select
                             id="selectFrom"
                             name="selectFrom"
                             value={selectedFromCity || formData.selectFrom}
                             onChange={handleChange}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                            className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                             required
                           >
                             <option value="" className="text-gray-900">Select a city</option>
@@ -395,7 +381,7 @@ export default function CreateShipmentPage() {
                               id="fromCitySearch"
                               value={selectedFromCity || fromCitySearchTerm}
                               onChange={handleFromCitySearchChange}
-                              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                              className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                               placeholder="Search or enter city name"
                             />
                             {fromCitySearchTerm.length > 0 && filteredFromCities.length > 0 && (
@@ -419,16 +405,16 @@ export default function CreateShipmentPage() {
                       </div>
                     </div>
                     {/* To City */}
-                    <div>
-                      <label htmlFor="selectTo" className="block text-sm font-medium text-gray-700">To City</label>
-                      <div className="mt-1 relative">
+                    <div className="col-span-1">
+                      <label htmlFor="selectTo" className="block text-sm font-medium text-gray-700 mb-1">To City</label>
+                      <div className="relative">
                         {!showToCitySearch ? (
                           <select
                             id="selectTo"
                             name="selectTo"
                             value={selectedToCity || formData.selectTo}
                             onChange={handleChange}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                            className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                             required
                           >
                             <option value="" className="text-gray-900">Select a city</option>
@@ -446,7 +432,7 @@ export default function CreateShipmentPage() {
                               id="toCitySearch"
                               value={selectedToCity || toCitySearchTerm}
                               onChange={handleToCitySearchChange}
-                              className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                              className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                               placeholder="Search or enter city name"
                             />
                             {toCitySearchTerm.length > 0 && filteredToCities.length > 0 && (
@@ -469,51 +455,49 @@ export default function CreateShipmentPage() {
                         )}
                       </div>
                     </div>
-                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="col-span-1">
+                      <label htmlFor="pickupLocation" className="block text-sm font-medium text-gray-700 mb-1">Pickup Location</label>
                       <div>
-                        <label htmlFor="pickupLocation" className="block text-sm font-medium text-gray-700">Pickup Location</label>
-                        <div className="mt-1">
-                          <input
-                            type="text"
-                            name="pickupLocation"
-                            value={formData.pickupLocation}
-                            onChange={handleChange}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
-                            required
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          name="pickupLocation"
+                          value={formData.pickupLocation}
+                          onChange={handleChange}
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
+                          required
+                        />
                       </div>
+                    </div>
+                    <div className="col-span-1">
+                      <label htmlFor="dropLocation" className="block text-sm font-medium text-gray-700 mb-1">Drop Location</label>
                       <div>
-                        <label htmlFor="dropLocation" className="block text-sm font-medium text-gray-700">Drop Location</label>
-                        <div className="mt-1">
-                          <input
-                            type="text"
-                            name="dropLocation"
-                            value={formData.dropLocation}
-                            onChange={handleChange}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
-                            required
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          name="dropLocation"
+                          value={formData.dropLocation}
+                          onChange={handleChange}
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
+                          required
+                        />
                       </div>
                     </div>
                   </div>
-                </div>
+                </section>
 
                 {/* Vehicle Details Section */}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Vehicle Details</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <section className="bg-neutral-50 rounded-xl p-6 shadow border border-gray-100 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Vehicle Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700">Vehicle Type</label>
-                      <div className="mt-1">
+                      <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700 mb-1">Vehicle Type</label>
+                      <div>
                         {!showOtherVehicle ? (
                           <select
                             id="vehicleType"
                             name="vehicleType"
                             value={formData.vehicleType}
                             onChange={handleChange}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                            className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                             required
                           >
                             <option value="" className="text-gray-900">Select vehicle type</option>
@@ -531,7 +515,7 @@ export default function CreateShipmentPage() {
                             id="otherVehicleType"
                             value={formData.vehicleType}
                             onChange={handleChange}
-                            className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                            className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                             placeholder="Enter vehicle type"
                             required
                           />
@@ -539,111 +523,111 @@ export default function CreateShipmentPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </section>
 
                 {/* Package Details Section */}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Package Details</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <section className="bg-neutral-50 rounded-xl p-6 shadow border border-gray-100 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Package Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                     <div>
-                      <label htmlFor="numberOfPackages" className="block text-sm font-medium text-gray-700">Number of Packages</label>
-                      <div className="mt-1">
+                      <label htmlFor="numberOfPackages" className="block text-sm font-medium text-gray-700 mb-1">Number of Packages</label>
+                      <div>
                         <input
                           type="number"
                           name="numberOfPackages"
                           value={formData.numberOfPackages}
                           onChange={handleChange}
-                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="totalWeight" className="block text-sm font-medium text-gray-700">Total Weight (kg)</label>
-                      <div className="mt-1">
+                      <label htmlFor="totalWeight" className="block text-sm font-medium text-gray-700 mb-1">Total Weight (kg)</label>
+                      <div>
                         <input
                           type="number"
                           name="totalWeight"
                           value={formData.totalWeight}
                           onChange={handleChange}
-                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                           step="0.01"
                         />
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="totalVolume" className="block text-sm font-medium text-gray-700">Total Volume (cbm)</label>
-                      <div className="mt-1">
+                      <label htmlFor="totalVolume" className="block text-sm font-medium text-gray-700 mb-1">Total Volume (cbm)</label>
+                      <div>
                         <input
                           type="number"
                           name="totalVolume"
                           value={formData.totalVolume}
                           onChange={handleChange}
-                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                           step="0.01"
                         />
                       </div>
                     </div>
                   </div>
-                </div>
+                </section>
 
                 {/* Loading Details Section */}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Loading Details</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <section className="bg-neutral-50 rounded-xl p-6 shadow border border-gray-100 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Loading Details</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                      <label htmlFor="loadingDate" className="block text-sm font-medium text-gray-700">Loading Date</label>
-                      <div className="mt-1">
+                      <label htmlFor="loadingDate" className="block text-sm font-medium text-gray-700 mb-1">Loading Date</label>
+                      <div>
                         <input
                           type="date"
                           name="loadingDate"
                           value={formData.loadingDate}
                           onChange={handleChange}
-                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="loadingTime" className="block text-sm font-medium text-gray-700">Loading Time</label>
-                      <div className="mt-1">
+                      <label htmlFor="loadingTime" className="block text-sm font-medium text-gray-700 mb-1">Loading Time</label>
+                      <div>
                         <input
                           type="time"
                           name="loadingTime"
                           value={formData.loadingTime}
                           onChange={handleChange}
-                          className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                          className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                           required
                         />
                       </div>
                     </div>
                   </div>
-                </div>
+                </section>
 
                 {/* Additional Details Section */}
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Additional Details</h2>
+                <section className="bg-neutral-50 rounded-xl p-6 shadow border border-gray-100 mb-4">
+                  <h2 className="text-xl font-bold text-gray-900 mb-4">Additional Details</h2>
                   <div>
-                    <label htmlFor="remark" className="block text-sm font-medium text-gray-700">Remarks</label>
-                    <div className="mt-1">
+                    <label htmlFor="remark" className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
+                    <div>
                       <textarea
                         id="remark"
                         name="remark"
                         value={formData.remark}
                         onChange={handleChange}
-                        className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900"
+                        className="block w-full bg-white border border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-base text-gray-900 transition"
                         rows={3}
                       />
                     </div>
                   </div>
-                </div>
+                </section>
 
                 {/* Form Actions */}
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => window.history.back()}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="px-5 py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                     disabled={isSubmitting || isLoading}
                   >
                     Cancel
@@ -651,7 +635,7 @@ export default function CreateShipmentPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting || isLoading}
-                    className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    className={`inline-flex items-center px-5 py-2 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition ${
                       isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                   >
@@ -670,12 +654,12 @@ export default function CreateShipmentPage() {
                 </div>
               </form>
             ) : (
-              <div className="space-y-8">
-                <h2 className="text-lg font-semibold text-gray-900">Select Owners and Brokers</h2>
+              <div className="space-y-6">
+                <h2 className="text-xl font-bold text-gray-900">Select Owners and Brokers</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Owners List */}
-                  <div>
-                    <h3 className="text-md font-bold mb-2">Owners</h3>
+                  <div className="bg-neutral-50 rounded-xl p-4 border border-gray-100 shadow">
+                    <h3 className="text-md font-semibold mb-2 text-gray-800">Owners</h3>
                     {isFetchingOwnersBrokers ? (
                       <div className="flex items-center justify-center py-4">
                         <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -687,7 +671,7 @@ export default function CreateShipmentPage() {
                     ) : availableOwners.length === 0 ? (
                       <p className="text-gray-500">No owners found for this route/vehicle.</p>
                     ) : (
-                      <ul className="space-y-2">
+                      <ul className="space-y-2 ">
                         {availableOwners.map(owner => (
                           <li key={owner.id} className="flex items-center">
                             <input
@@ -706,8 +690,8 @@ export default function CreateShipmentPage() {
                     )}
                   </div>
                   {/* Brokers List */}
-                  <div>
-                    <h3 className="text-md font-bold mb-2">Brokers</h3>
+                  <div className="bg-neutral-50 rounded-xl p-4 border border-gray-100 shadow">
+                    <h3 className="text-md font-semibold mb-2 text-gray-800">Brokers</h3>
                     {isFetchingOwnersBrokers ? (
                       <div className="flex items-center justify-center py-4">
                         <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -738,11 +722,11 @@ export default function CreateShipmentPage() {
                     )}
                   </div>
                 </div>
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t border-gray-100">
                   <button
                     type="button"
                     onClick={() => setShowOwnerBrokerSelection(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    className="px-5 py-2 border border-gray-300 rounded-lg text-base font-medium text-gray-700 bg-white hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                     disabled={isSubmitting}
                   >
                     Back
@@ -750,7 +734,7 @@ export default function CreateShipmentPage() {
                   <button
                     type="button"
                     onClick={handleOwnerBrokerSubmit}
-                    className={`inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 ${
+                    className={`inline-flex items-center px-5 py-2 border border-transparent rounded-lg shadow-sm text-base font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition ${
                       isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
                     disabled={isSubmitting}
@@ -775,4 +759,4 @@ export default function CreateShipmentPage() {
       </main>
     </div>
   );
-} 
+}
