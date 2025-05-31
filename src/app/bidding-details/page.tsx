@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import AddBrokerDialog from "./AddBrokerDialog";
+import ExtendBiddingDialog from "./ExtendBiddingDialog";
 
 // interface ShipmentData {
 //   _id: string;
@@ -44,6 +45,7 @@ function BiddingDetailsContent() {
   const [lastRefreshTime, setLastRefreshTime] = useState<Date | null>(null); // Track last refresh time
   const [isAddBrokerDialogOpen, setIsAddBrokerDialogOpen] = useState(false); // Track dialog state
   const [selectedBrokerIds, setSelectedBrokerIds] = useState<string[]>([]); // Track selected broker IDs
+  const [isExtendBiddingDialogOpen, setIsExtendBiddingDialogOpen] = useState(false); // Track extend bidding dialog state
 
   // Function to create a unique identifier for a bid
   // const createBidIdentifier = (bid: any) => {
@@ -445,6 +447,22 @@ function BiddingDetailsContent() {
     setSelectedBrokerIds(brokerIds);
   };
 
+  // Handle opening extend bidding dialog
+  const handleOpenExtendBiddingDialog = () => {
+    setIsExtendBiddingDialogOpen(true);
+  };
+
+  // Handle closing extend bidding dialog
+  const handleCloseExtendBiddingDialog = () => {
+    setIsExtendBiddingDialogOpen(false);
+  };
+
+  // Handle successful extension
+  const handleExtendSuccess = () => {
+    // Refresh the data after successful extension
+    fetchLatestData(false, true);
+  };
+
   return (
     <>
       <div className="bg-gray-50 min-h-[250px]  w-full">
@@ -493,6 +511,22 @@ function BiddingDetailsContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
                 Add Broker
+              </button>
+              
+              {/* Extend Bidding Button */}
+              <button 
+                onClick={handleOpenExtendBiddingDialog}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all duration-200 shadow-md bg-orange-600 text-white hover:bg-orange-700 hover:shadow-lg transform hover:scale-105"
+              >
+                <svg 
+                  className="w-4 h-4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Extend Bidding
               </button>
               
               {/* Last Refresh Time */}
@@ -886,6 +920,13 @@ function BiddingDetailsContent() {
         onBrokerSelect={handleBrokerSelect}
         shipment={shipment}
         handleCloseAddBrokerDialog={handleCloseAddBrokerDialog}
+      />
+
+      <ExtendBiddingDialog
+        isOpen={isExtendBiddingDialogOpen}
+        onClose={handleCloseExtendBiddingDialog}
+        shipment={shipment}
+        onSuccess={handleExtendSuccess}
       />
     </>
   );
