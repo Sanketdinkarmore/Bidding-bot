@@ -22,10 +22,12 @@ const AddBrokerDialog: React.FC<AddBrokerDialogProps> = ({
   onClose,
   selectedBrokerIds,
   onBrokerSelect,
-  shipment
+  shipment,
+  handleCloseAddBrokerDialog
 }) => {
   const [brokers, setBrokers] = useState<Broker[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch brokers when dialog opens
@@ -83,16 +85,19 @@ const AddBrokerDialog: React.FC<AddBrokerDialogProps> = ({
     }
 
     try {
+      setSending(true)
+
       // Here you would typically make an API call to add the brokers to the auction
       console.log('Adding brokers to auction:', selectedBrokerIds);
       
       // TODO: Implement actual API call to add brokers to auction
       // Example API call:
-      const response = await fetch('/api/broker/add-brokers', {
+      const response = await fetch('/api/brokers/add-brokers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           auctionId: shipment._id, 
+          shipmentDetails: shipment.shipmentDetails,
           brokers: brokers.filter(broker => selectedBrokerIds.includes(broker.id)) 
         })
       });
@@ -104,9 +109,11 @@ const AddBrokerDialog: React.FC<AddBrokerDialogProps> = ({
 
       toast.success("brokers successfully added")
 
-      console.log(`✅ ${selectedBrokerIds.length} broker(s) added to auction successfully`);
+      handleCloseAddBrokerDialog()
     } catch (error) {
       console.error('❌ Error adding brokers to auction:', error);
+    } finally {
+      setSending(false)
     }
   };
 
@@ -196,7 +203,7 @@ const AddBrokerDialog: React.FC<AddBrokerDialogProps> = ({
                 {brokers.map((broker) => (
                   <div
                     key={broker.id}
-                    onClick={() => handleBrokerToggle(broker.id)}
+                    onClick={() => !sending && handleBrokerToggle(broker.id)}
                     className={`relative p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                       selectedBrokerIds.includes(broker.id)
                         ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.01]'
@@ -285,7 +292,7 @@ const AddBrokerDialog: React.FC<AddBrokerDialogProps> = ({
                   : 'bg-green-600 hover:bg-green-700 hover:shadow-lg transform hover:scale-105'
               }`}
             >
-              {loading ? 'Loading...' : selectedBrokerIds.length === 0 ? 'Add Brokers' : `Add ${selectedBrokerIds.length} Broker${selectedBrokerIds.length === 1 ? '' : 's'}`}
+              {sending ? 'Loading...' :  'Add Brokers'}
             </button>
           </div>
         </div>

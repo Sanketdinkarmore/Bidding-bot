@@ -27,8 +27,6 @@ export async function POST(request: Request) {
     if (result.acknowledged) {
       const matchingBrokers = [...selectionData.selectedOwners, ...selectionData.selectedBrokers];
 
-      console.log(selectionData, "selectionData")
-
       const dateObjectt = selectionData.shipmentDetails.loadingDate;
       const dateObject = new Date(dateObjectt);
 

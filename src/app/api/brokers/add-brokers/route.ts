@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { ObjectId } from 'mongodb';
+import axios from 'axios';
+
 import clientPromise from '@/lib/mongodb';
 
 export async function POST(request: Request) {
@@ -7,6 +10,7 @@ export async function POST(request: Request) {
     const { 
       auctionId, 
       brokers, 
+      shipmentDetails
     } = body;
 
     if (!auctionId || !brokers || brokers.length === 0) {
@@ -18,10 +22,57 @@ export async function POST(request: Request) {
 
     const client = await clientPromise;
     const db = client.db('bidding-bot');
-    const collection = db.collection('selectedOwnerBroekr')
+    const collection = db.collection('selectedOwnerBrokers');
 
+    const result = await collection.updateOne(
+      { _id: new ObjectId(auctionId) },
+      { $push: { selectedBrokers: { $each: brokers } } } as any,
+    );
+
+    if (result.modifiedCount > 0) {
+      const dateObjectt = shipmentDetails.loadingDate;
+      const dateObject = new Date(dateObjectt);
+
+      const day = dateObject.getDate();
+      const month = dateObject.getMonth() + 1;
+      const year = dateObject.getFullYear();
+      const finaldate = `${day}/${month}/${year}`;
+
+      const dataz = {
+        datetime: new Date().toLocaleString("en-GB", {
+          timeZone: "Asia/Kolkata",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        }),
+        fromm: shipmentDetails.fromCity,
+        to: shipmentDetails.toCity,
+        vehicleType: shipmentDetails.vehicleType,
+        totalWeight: shipmentDetails.totalWeight,
+        totalVolume: shipmentDetails.totalVolume,
+        loadingDate: finaldate,
+        loadingTime: shipmentDetails.loadingTime,
+        pickupAdress: shipmentDetails.pickupLocation,
+        goodsQuantity: shipmentDetails.totalVolume,
+        deliveryAdress: shipmentDetails.dropLocation,
+        remark: shipmentDetails.remark,
+        uniqueId: auctionId,
+      };
+
+      for (const broker of brokers) {
+        await sendBiddingTemplate(dataz, broker.phone)
+      }
+
+      return NextResponse.json({ success: true });
+    } else {
+      return NextResponse.json({ success: false });
+    }
   } catch (error) {
     console.error('Error pushing to brokers:', error);
+
     return NextResponse.json(
       { 
         error: 'Failed to push shipment details to brokers',
@@ -32,88 +83,107 @@ export async function POST(request: Request) {
   }
 }
 
-// Helper function to generate notification messages
-function generateNotificationMessage(shipmentDetails: any, recipientType: 'broker' | 'owner'): string {
-  const { fromCity, toCity, vehicleType, loadingDate, loadingTime, bidClosingDateTime } = shipmentDetails;
-  
-  const loadingDateTime = new Date(`${loadingDate}T${loadingTime}`).toLocaleString('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  });
-  
-  const bidClosingTime = new Date(bidClosingDateTime).toLocaleString('en-IN', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  });
-
-  if (recipientType === 'broker') {
-    return `🚛 NEW SHIPMENT OPPORTUNITY!
-
-📍 Route: ${fromCity} → ${toCity}
-🚚 Vehicle: ${vehicleType}
-📅 Loading: ${loadingDateTime}
-⏰ Bid Closes: ${bidClosingTime}
-
-💰 Submit your best rate to win this shipment!
-🔗 Login to bid now: [Bidding Portal Link]
-
-#Transport #Logistics #BiddingOpportunity`;
-  } else {
-    return `🚛 NEW SHIPMENT REQUEST!
-
-📍 Route: ${fromCity} → ${toCity}
-🚚 Vehicle Needed: ${vehicleType}
-📅 Loading: ${loadingDateTime}
-⏰ Bid Closes: ${bidClosingTime}
-
-💰 Quote your rate to secure this load!
-🔗 Login to submit bid: [Owner Portal Link]
-
-#VehicleOwner #Transport #LoadOpportunity`;
-  }
-}
-
-// GET endpoint to fetch shipment notifications
-export async function GET(request: Request) {
+async function sendBiddingTemplate(data: any, broker: any) {
   try {
-    const { searchParams } = new URL(request.url);
-    const shipmentId = searchParams.get('shipmentId');
-    const recipientType = searchParams.get('type'); // 'broker' or 'owner'
-    const status = searchParams.get('status'); // 'pending', 'sent', 'failed'
+    const json = {
+        "messaging_product": "whatsapp",
+        "recipient_type": "individual",
+        "to": `91${broker}`,
+        "type": "template",
+        "template": {
+            "name": "broker_biddings",
+            "language": {
+                "code": "en_US"
+            },
+            "components": [
+                {
+                    "type": "body",
+                    "parameters": [
+                        {
+                            "type": "text",
+                            "text": data.uniqueId.toString() ?? "-"
+                        },
+                        {
+                            "type": "text",
+                            "text": data.datetime
+                        },
+                        {
+                            "type": "text",
+                            "text": data.fromm
+                        },
+                        {
+                            "type": "text",
+                            "text": data.to
+                        },
+                        {
+                            "type": "text",
+                            "text": data.vehicleType
+                        },
+                        {
+                            "type": "text",
+                            "text": data.totalWeight === "" ? "-" : data.totalWeight
+                        },
+                        {
+                            "type": "text",
+                            "text": data.totalVolume === "" ? "-" : data.totalVolume
+                        },
+                        {
+                            "type": "text",
+                            "text": data.loadingTime
+                        },
+                        {
+                            "type": "text",
+                            "text": data.pickupAdress
+                        },
+                        {
+                            "type": "text",
+                            "text": data.goodsQuantity === "" ? "-" : data.goodsQuantity
+                        },
+                        {
+                            "type": "text",
+                            "text": data.deliveryAdress
+                        },
+                        {
+                            "type": "text",
+                            "text": data.remark === "" ? "-" : data.remark
+                        },
+                    ]
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "0",
+                    "parameters": [
+                        {
+                            "type": "payload",
+                            "payload": `bid-${data.uniqueId}`
+                        }
+                    ]
+                },
+                {
+                    "type": "button",
+                    "sub_type": "quick_reply",
+                    "index": "1",
+                    "parameters": [
+                        {
+                            "type": "payload",
+                            "payload": `notbid-${data.uniqueId}`
+                        }
+                    ]
+                },
+            ]
+        }
+    }
 
-    const client = await clientPromise;
-    const db = client.db('bidding-bot');
-
-    let query: any = {};
-    
-    if (shipmentId) query.shipmentId = shipmentId;
-    if (recipientType) query.recipientType = recipientType;
-    if (status) query.status = status;
-
-    const notifications = await db.collection('broker_notifications')
-      .find(query)
-      .sort({ sentAt: -1 })
-      .limit(100)
-      .toArray();
-
-    const ownerNotifications = await db.collection('owner_notifications')
-      .find(query)
-      .sort({ sentAt: -1 })
-      .limit(100)
-      .toArray();
-
-    return NextResponse.json({
-      success: true,
-      brokerNotifications: notifications,
-      ownerNotifications: ownerNotifications,
-      total: notifications.length + ownerNotifications.length
+    const response = await axios.post(`https://graph.facebook.com/v21.0/${process.env.Meta_WA_SenderPhoneNumberId}/messages`, json, {
+      headers: {
+        'Authorization': `Bearer ${process.env.Meta_WA_accessToken}`
+      }
     });
 
-  } catch (error) {
-    console.error('Error fetching notifications:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch notifications' },
-      { status: 500 }
-    );
+    console.log(response.data, "bidding template sent");
+  } catch (error: any) {
+    console.log(error?.response?.data, "error");
   }
 }
+

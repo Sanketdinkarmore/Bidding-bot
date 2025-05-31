@@ -96,6 +96,46 @@ export default function ViewShipmentsPage() {
     }
   };
 
+  // Function to get shipment status based on bidding time
+  const getShipmentStatus = (loadingDate: string, loadingTime: string) => {
+    try {
+      // Combine loading date and time to get bidding end time
+      const biddingEndTime = new Date(`${loadingDate}T${loadingTime}`);
+      const currentTime = new Date();
+      
+      // Calculate time difference in milliseconds
+      const timeDiff = biddingEndTime.getTime() - currentTime.getTime();
+      
+      // If current time is past bidding time, status is closed
+      if (timeDiff <= 0) {
+        return {
+          status: 'Closed',
+          className: 'bg-red-100 text-red-800'
+        };
+      }
+      
+      // If less than 30 minutes (30 * 60 * 1000 ms) remaining, status is closing soon
+      if (timeDiff <= 30 * 60 * 1000) {
+        return {
+          status: 'Closing Soon',
+          className: 'bg-yellow-100 text-yellow-800'
+        };
+      }
+      
+      // Otherwise, status is active
+      return {
+        status: 'Active',
+        className: 'bg-green-100 text-green-800'
+      };
+    } catch (error) {
+      console.error('Error calculating shipment status:', error);
+      return {
+        status: 'Active',
+        className: 'bg-gray-100 text-gray-800'
+      };
+    }
+  };
+
   const filterAndSortShipments = () => {
     let filtered = [...shipments];
 
@@ -363,7 +403,7 @@ export default function ViewShipmentsPage() {
                     <div className="flex flex-wrap gap-2">
                       {searchTerm && (
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          Search: "{searchTerm}"
+                          Search: &ldquo;{searchTerm}&rdquo;
                           <button
                             onClick={() => setSearchTerm('')}
                             className="ml-1.5 h-3 w-3 text-blue-600 hover:text-blue-800"
@@ -469,11 +509,9 @@ export default function ViewShipmentsPage() {
                           <span className="text-lg font-semibold text-gray-900">{shipment.selectTo}</span>
                         </div>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          new Date(shipment.loadingDate) >= new Date() 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
+                          getShipmentStatus(shipment.loadingDate, shipment.loadingTime).className
                         }`}>
-                          {new Date(shipment.loadingDate) >= new Date() ? 'Active' : 'Completed'}
+                          {getShipmentStatus(shipment.loadingDate, shipment.loadingTime).status}
                         </span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">ID: {shipment._id.slice(-8)}</p>
