@@ -165,231 +165,404 @@ export default function ViewShipmentsPage() {
   const vehicleTypes = Array.from(new Set(shipments.map(s => s.vehicleType)));
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="bg-white shadow-sm px-4 py-4 sm:px-6 lg:px-8 rounded-lg">
-        <div className="mx-auto max-w-7xl">
-          <div className="md:flex md:items-center md:justify-between">
-            <div className="min-w-0 flex-1">
-              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">Shipments Bids List</h2>
+    <div className="min-h-screen bg-gray-50">
+      {/* Clean Header */}
+      <div className="bg-white border-b border-gray-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Shipments</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                {filteredShipments.length} total shipments
+              </p>
             </div>
-            <div className="mt-4 flex md:ml-4 md:mt-0">
-              <Link
-                href="/create-shipment"
-                className="inline-flex items-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 transition-colors duration-200"
-              >
-                Create New Shipment
-              </Link>
-            </div>
+            <Link
+              href="/create-shipment"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Shipment
+            </Link>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Filters */}
-        <div className="bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-lg font-medium leading-6 text-gray-900">Filter Shipments</h3>
-            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {/* Search */}
-              <div>
-                <label htmlFor="search" className="block text-sm font-medium text-gray-700">Search</label>
-                <div className="mt-1">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Enhanced Filters */}
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm mb-6 overflow-hidden">
+          <div className="px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.414A1 1 0 013 6.707V4z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Filters</h3>
+                  <p className="text-sm text-gray-600">Refine your search results</p>
+                </div>
+              </div>
+              {(searchTerm || selectedVehicleType !== 'all' || selectedDateRange !== 'all') && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setSelectedVehicleType('all');
+                    setSelectedDateRange('all');
+                    setSortField('loadingDate');
+                    setSortOrder('desc');
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors"
+                >
+                  <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Clear All
+                </button>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Enhanced Search */}
+              <div className="space-y-3">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <svg className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Search Shipments
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
                   <input
                     type="text"
-                    id="search"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
-                    placeholder="Search shipments..."
+                    className="text-black w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="Search locations, vehicle type..."
                   />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    >
+                      <svg className="h-4 w-4 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              
+              {/* Enhanced Vehicle Type Filter */}
+              <div className="space-y-3">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <svg className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2H10a2 2 0 01-2-2v-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2.172a2 2 0 01-1.414-.586l-.828-.828A2 2 0 0012 5H8" />
+                  </svg>
+                  Vehicle Type
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedVehicleType}
+                    onChange={(e) => setSelectedVehicleType(e.target.value)}
+                    className="text-black w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer"
+                  >
+                    <option value="all">All Vehicle Types</option>
+                    {vehicleTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
-              {/* Vehicle Type Filter */}
-              <div>
-                <label htmlFor="vehicleType" className="block text-sm font-medium text-gray-700">Vehicle Type</label>
-                <select
-                  id="vehicleType"
-                  value={selectedVehicleType}
-                  onChange={(e) => setSelectedVehicleType(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
-                >
-                  <option value="all">All Vehicles</option>
-                  {vehicleTypes.map(type => (
-                    <option key={type} value={type}>{type}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Date Range Filter */}
-              <div>
-                <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700">Date Range</label>
-                <select
-                  id="dateRange"
-                  value={selectedDateRange}
-                  onChange={(e) => setSelectedDateRange(e.target.value)}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
-                >
-                  <option value="all">All Dates</option>
-                  <option value="today">Today</option>
-                  <option value="week">Next 7 Days</option>
-                  <option value="upcoming">Upcoming</option>
-                  <option value="past">Past</option>
-                </select>
-              </div>
-
-              {/* Sort Order */}
-              <div>
-                <label htmlFor="sort" className="block text-sm font-medium text-gray-700">Sort By</label>
-                <div className="mt-1 flex rounded-md shadow-sm">
+              {/* Enhanced Date Range Filter */}
+              <div className="space-y-3">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <svg className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 8a4 4 0 11-8 0v-4h8v4z" />
+                  </svg>
+                  Date Range
+                </label>
+                <div className="relative">
                   <select
-                    id="sort"
+                    value={selectedDateRange}
+                    onChange={(e) => setSelectedDateRange(e.target.value)}
+                    className="text-black w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer"
+                  >
+                    <option value="all">All Time Periods</option>
+                    <option value="today">Today Only</option>
+                    <option value="week">Next 7 Days</option>
+                    <option value="upcoming">All Upcoming</option>
+                    <option value="past">Past Shipments</option>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Sort */}
+              <div className="space-y-3">
+                <label className="flex items-center text-sm font-medium text-gray-700">
+                  <svg className="h-4 w-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2V7z" />
+                  </svg>
+                  Sort & Order
+                </label>
+                <div className="flex rounded-lg border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200">
+                  <select
                     value={sortField}
                     onChange={(e) => setSortField(e.target.value as SortField)}
-                    className="block w-full rounded-l-md border-gray-300 focus:border-blue-500 focus:ring-blue-500 sm:text-sm text-gray-900"
+                    className="text-black flex-1 px-4 py-2.5 rounded-l-lg border-0 text-sm bg-transparent focus:outline-none appearance-none cursor-pointer"
                   >
                     <option value="loadingDate">Loading Date</option>
                     <option value="createdAt">Created Date</option>
                   </select>
+                  <div className="border-l border-gray-300"></div>
                   <button
                     type="button"
                     onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                    className="inline-flex items-center rounded-r-md border border-l-0 border-gray-300 bg-gray-50 px-3 text-gray-500 hover:bg-gray-100 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                    className="px-3 py-2.5 rounded-r-lg text-gray-500 hover:text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-0 transition-colors duration-200 group"
+                    title={sortOrder === 'asc' ? 'Sort Ascending' : 'Sort Descending'}
                   >
-                    {sortOrder === 'asc' ? '↑' : '↓'}
+                    {sortOrder === 'asc' ? (
+                      <svg className="h-4 w-4 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                      </svg>
+                    ) : (
+                      <svg className="h-4 w-4 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                      </svg>
+                    )}
                   </button>
                 </div>
               </div>
             </div>
+            
+            {/* Active Filters Display */}
+            {(searchTerm || selectedVehicleType !== 'all' || selectedDateRange !== 'all') && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {searchTerm && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          Search: "{searchTerm}"
+                          <button
+                            onClick={() => setSearchTerm('')}
+                            className="ml-1.5 h-3 w-3 text-blue-600 hover:text-blue-800"
+                          >
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                      {selectedVehicleType !== 'all' && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Vehicle: {selectedVehicleType}
+                          <button
+                            onClick={() => setSelectedVehicleType('all')}
+                            className="ml-1.5 h-3 w-3 text-green-600 hover:text-green-800"
+                          >
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                      {selectedDateRange !== 'all' && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          Date: {selectedDateRange === 'today' ? 'Today' : selectedDateRange === 'week' ? 'Next 7 Days' : selectedDateRange === 'upcoming' ? 'Upcoming' : 'Past'}
+                          <button
+                            onClick={() => setSelectedDateRange('all')}
+                            className="ml-1.5 h-3 w-3 text-purple-600 hover:text-purple-800"
+                          >
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {filteredShipments.length} result{filteredShipments.length !== 1 ? 's' : ''} found
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Shipments List */}
+        {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-            <p className="ml-3 text-sm text-gray-500">Loading shipments...</p>
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-600">Loading shipments...</span>
           </div>
         ) : filteredShipments.length === 0 ? (
           <div className="text-center py-12">
-            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-            <p className="mt-2 text-sm text-gray-500">No shipments found matching your criteria.</p>
+            <div className="text-gray-400 mb-4">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No shipments found</h3>
+            <p className="text-gray-500 mb-6">
+              {searchTerm || selectedVehicleType !== 'all' || selectedDateRange !== 'all' 
+                ? "No shipments match your current filters."
+                : "You haven't created any shipments yet."
+              }
+            </p>
+            
             {searchTerm || selectedVehicleType !== 'all' || selectedDateRange !== 'all' ? (
               <button
                 onClick={() => {
                   setSearchTerm('');
                   setSelectedVehicleType('all');
                   setSelectedDateRange('all');
-                  setSortField('loadingDate');
-                  setSortOrder('desc');
                 }}
-                className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500"
+                className="inline-flex items-center px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 Clear Filters
               </button>
             ) : (
-              <Link href="/create-shipment" className="mt-4 inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500">
-                Create your first shipment
-                <svg className="ml-1 h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
+              <Link 
+                href="/create-shipment" 
+                className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                Create First Shipment
               </Link>
             )}
           </div>
         ) : (
-          <div className="overflow-hidden bg-white shadow sm:rounded-lg">
-            <ul role="list" className="divide-y divide-gray-200">
-              {filteredShipments.map((shipment) => (
-                <li key={shipment._id} className="px-4 py-5 sm:px-6 hover:bg-gray-50">
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-blue-600 truncate">
-                        {shipment.selectFrom} → {shipment.selectTo}
-                      </p>
-                      <div className="mt-2 flex flex-wrap items-center gap-y-2 gap-x-4 text-sm text-gray-500">
-                        <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                        </svg>
-                        <span>{shipment.numberOfPackages} packages</span>
-                      </div>
-                      <div className="mt-1 flex items-center text-sm text-gray-500">
-                        <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M5.75 2a.75.75 0 01.75.75V4h7V2.75a.75.75 0 011.5 0V4h.25A2.75 2.75 0 0118 6.75v8.5A2.75 2.75 0 0115.25 18H4.75A2.75 2.75 0 012 15.25v-8.5A2.75 2.75 0 014.75 4H5V2.75A.75.75 0 015.75 2zm-1 5.5c-.69 0-1.25.56-1.25 1.25v6.5c0 .69.56 1.25 1.25 1.25h10.5c.69 0 1.25-.56 1.25-1.25v-6.5c0-.69-.56-1.25-1.25-1.25H4.75z" clipRule="evenodd" />
-                        </svg>
-                        <span>{new Date(shipment.loadingDate).toLocaleDateString()} at {shipment.loadingTime}</span>
-                      </div>
-                      {shipment.vehicleType && (
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M3.75 3A1.75 1.75 0 002 4.75v9.5A1.75 1.75 0 003.75 16h.511a.75.75 0 01.041-.243l1.652-4.055a.75.75 0 01.831-.456h3.438a.75.75 0 01.831.456l1.652 4.055a.75.75 0 01.041.243h.511A1.75 1.75 0 0018 14.25v-9.5A1.75 1.75 0 0016.25 3H3.75zM16.25 4.5a.25.25 0 01.25.25v9.5a.25.25 0 01-.25.25h-.327l-1.507-3.701a1.75 1.75 0 00-1.954-1.077h-3.438a1.75 1.75 0 00-1.954 1.077L4.077 14.5H3.75a.25.25 0 01-.25-.25v-9.5a.25.25 0 01.25-.25h12.5z" />
+          <div className="space-y-4">
+            {filteredShipments.map((shipment) => (
+              <div key={shipment._id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                {/* Header Row */}
+                <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-lg font-semibold text-gray-900">{shipment.selectFrom}</span>
+                          <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
-                          <span>{shipment.vehicleType}</span>
+                          <span className="text-lg font-semibold text-gray-900">{shipment.selectTo}</span>
                         </div>
-                      )}
-                       {shipment.totalWeight && (
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M10 2a.75.75 0 01.75.75v5.59l1.95-2.1a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 111.1-1.02l1.95 2.1V2.75A.75.75 0 0110 2z" clipRule="evenodd" />
-                          </svg>
-                          <span>{shipment.totalWeight} kg</span>
-                        </div>
-                      )}
-                       {shipment.totalVolume && (
-                        <div className="mt-1 flex items-center text-sm text-gray-500">
-                          <svg className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 7a.75.75 0 01.75-.75h.01a.75.75 0 01.75.75v.01a.75.75 0 01-.75.75h-.01a.75.75 0 01-.75-.75V7zm7 0a.75.75 0 01.75-.75h.01a.75.75 0 01.75.75v.01a.75.75 0 01-.75.75h-.01a.75.75 0 01-.75-.75V7zm4.75-.75a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75V7a.75.75 0 00-.75-.75h-.01zM5.75 10a.75.75 0 01.75-.75h.01a.75.75 0 01.75.75v.01a.75.75 0 01-.75.75h-.01a.75.75 0 01-.75-.75V10zm2.75-.75a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75V10a.75.75 0 00-.75-.75h-.01zm5.75-.75a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75V10a.75.75 0 00-.75-.75h-.01zM6.75 13a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75v-.01a.75.75 0 00-.75-.75h-.01zm3.75-.75a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75v-.01a.75.75 0 00-.75-.75h-.01zm3.75-.75a.75.75 0 00-.75.75v.01c0 .414.336.75.75.75h.01a.75.75 0 00.75-.75v-.01a.75.75 0 00-.75-.75h-.01z" clipRule="evenodd" />
-                          </svg>
-                          <span>{shipment.totalVolume} cbm</span>
-                        </div>
-                      )}
-                      {shipment.highestBid && (
-                        <div className="flex flex-wrap items-center gap-4 bg-green-50 border border-green-200 rounded-md px-4 py-2 mt-2">
-                          <div className="flex items-center gap-1 text-green-800 font-semibold">
-                            <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11V5a1 1 0 10-2 0v2a1 1 0 001 1h2a1 1 0 100-2h-1zm-1 4a1 1 0 100 2 1 1 0 000-2zm0 4a1 1 0 100 2 1 1 0 000-2z" /></svg>
-                            ₹{shipment.highestBid.amount}
-                          </div>
-                          <div className="flex items-center gap-1 text-green-700 text-sm">
-                            <svg className="h-4 w-4 text-green-400" fill="currentColor" viewBox="0 0 20 20"><path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" /><path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" /></svg>
-                            {shipment.highestBid.phone}
-                          </div>
-                          <div className="flex items-center gap-1 text-green-600 text-xs">
-                            <svg className="h-4 w-4 text-green-300" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 00-1-1H6zm0 2V3h8v1H6zm-2 2h12v10H4V6zm6 2a4 4 0 100 8 4 4 0 000-8z" clipRule="evenodd" /></svg>
-                            {new Date(shipment.highestBid.timestamp).toLocaleString()}
-                          </div>
-                        </div>
-                      )}
-                      {shipment.remark && (
-                        <div className="mt-1 text-sm text-gray-500">
-                          <span className="font-medium text-gray-700">Remark:</span> {shipment.remark}
-                        </div>
-                      )}
-                      <div className="mt-2 flex items-center text-sm text-gray-500">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${new Date(shipment.loadingDate) >= new Date() ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          new Date(shipment.loadingDate) >= new Date() 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
                           {new Date(shipment.loadingDate) >= new Date() ? 'Active' : 'Completed'}
                         </span>
                       </div>
+                      <p className="text-sm text-gray-500 mt-1">ID: {shipment._id.slice(-8)}</p>
                     </div>
-                    <div className="ml-4 flex-shrink-0 self-center">
-                      <Link
-                        href={`/bidding-details?id=${shipment._id}`}
-                        className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                      >
-                        View Details
-                        <svg className="ml-2 h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </Link>
-                    </div>
+                    
+                    {shipment.highestBid && (
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-green-600">₹{shipment.highestBid.amount.toLocaleString()}</div>
+                        <p className="text-xs text-gray-500">Highest Bid</p>
+                      </div>
+                    )}
                   </div>
-                </li>
-              ))}
-            </ul>
+                </div>
+
+                {/* Details Grid */}
+                <div className="px-6 py-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500 font-medium">Loading Date</p>
+                      <p className="text-gray-900 mt-1">{new Date(shipment.loadingDate).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 font-medium">Time</p>
+                      <p className="text-gray-900 mt-1">{shipment.loadingTime}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 font-medium">Vehicle</p>
+                      <p className="text-gray-900 mt-1">{shipment.vehicleType}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 font-medium">Packages</p>
+                      <p className="text-gray-900 mt-1">{shipment.numberOfPackages}</p>
+                    </div>
+                    {shipment.totalWeight && (
+                      <div>
+                        <p className="text-gray-500 font-medium">Weight</p>
+                        <p className="text-gray-900 mt-1">{shipment.totalWeight} kg</p>
+                      </div>
+                    )}
+                    {shipment.totalVolume && (
+                      <div>
+                        <p className="text-gray-500 font-medium">Volume</p>
+                        <p className="text-gray-900 mt-1">{shipment.totalVolume} cbm</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bid Details */}
+                  {shipment.highestBid && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-medium text-gray-700">Bidder Contact</p>
+                          <p className="text-sm text-gray-900">{shipment.highestBid.phone}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-gray-700">Bid Time</p>
+                          <p className="text-sm text-gray-900">{new Date(shipment.highestBid.timestamp).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Remark */}
+                  {shipment.remark && (
+                    <div className="mt-4 pt-4 border-t border-gray-100">
+                      <p className="text-sm font-medium text-gray-700 mb-1">Special Instructions</p>
+                      <p className="text-sm text-gray-600">{shipment.remark}</p>
+                    </div>
+                  )}
+
+                  {/* Action Button */}
+                  <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+                    <Link
+                      href={`/bidding-details?id=${shipment._id}`}
+                      className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 text-sm font-medium rounded-md border border-blue-200 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+                    >
+                      View Details
+                      <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
     </div>
   );
-}
+} 

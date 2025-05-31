@@ -359,18 +359,29 @@ export default function CreateShipmentPage() {
         },
         selectedOwners: availableOwners.filter(owner => selectedOwners.includes(owner.id)),
         selectedBrokers: availableBrokers.filter(broker => selectedBrokers.includes(broker.id)),
+        notificationMethod: 'database' // Can be changed to 'sms', 'whatsapp', etc.
       };
 
-      const response = await fetch('/api/save-selection', {
+      const response = await fetch('/api/push-to-brokers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectionData),
       });
 
-      if (!response.ok) throw new Error('Failed to save selection');
+      if (!response.ok) throw new Error('Failed to push shipment to brokers');
 
-      setSuccess('Selection saved successfully!');
-      // Now clear formData and related state after everything is done
+      const result = await response.json();
+      
+      setSuccess(`🎉 Shipment created successfully! 
+      
+📊 Notification Summary:
+✅ ${result.summary.successfulBrokerNotifications}/${result.summary.totalBrokers} brokers notified
+✅ ${result.summary.successfulOwnerNotifications}/${result.summary.totalOwners} owners notified
+🆔 Shipment ID: ${result.shipmentId}
+
+All selected brokers and owners have been notified about this shipment opportunity!`);
+      
+      // Clear form and reset state after successful submission
       setFormData({
         numberOfPackages: '',
         loadingDate: '',
@@ -403,8 +414,8 @@ export default function CreateShipmentPage() {
       setSelectedOwners([]);
       setSelectedBrokers([]);
     } catch (error) {
-      setError('Error saving selection. Please try again.');
-      console.error('Error saving selection:', error);
+      setError('Error pushing shipment to brokers. Please try again.');
+      console.error('Error pushing to brokers:', error);
     } finally {
       setIsSubmitting(false);
     }

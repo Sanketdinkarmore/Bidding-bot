@@ -1,6 +1,7 @@
 'use client';
 
 import './globals.css';
+import { Toaster } from "react-hot-toast";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "./Navbar";
 import { usePathname, useRouter } from 'next/navigation';
@@ -57,6 +58,7 @@ export default function RootLayout({
             </div>
           </footer>
         )}
+        <Toaster />
       </body>
     </html>
   );
