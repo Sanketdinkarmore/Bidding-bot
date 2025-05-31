@@ -359,29 +359,18 @@ export default function CreateShipmentPage() {
         },
         selectedOwners: availableOwners.filter(owner => selectedOwners.includes(owner.id)),
         selectedBrokers: availableBrokers.filter(broker => selectedBrokers.includes(broker.id)),
-        notificationMethod: 'database' // Can be changed to 'sms', 'whatsapp', etc.
       };
 
-      const response = await fetch('/api/push-to-brokers', {
+      const response = await fetch('/api/save-selection', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(selectionData),
       });
 
-      if (!response.ok) throw new Error('Failed to push shipment to brokers');
+      if (!response.ok) throw new Error('Failed to save selection');
 
-      const result = await response.json();
-      
-      setSuccess(`🎉 Shipment created successfully! 
-      
-📊 Notification Summary:
-✅ ${result.summary.successfulBrokerNotifications}/${result.summary.totalBrokers} brokers notified
-✅ ${result.summary.successfulOwnerNotifications}/${result.summary.totalOwners} owners notified
-🆔 Shipment ID: ${result.shipmentId}
-
-All selected brokers and owners have been notified about this shipment opportunity!`);
-      
-      // Clear form and reset state after successful submission
+      setSuccess('Selection saved successfully!');
+      // Now clear formData and related state after everything is done
       setFormData({
         numberOfPackages: '',
         loadingDate: '',
@@ -397,6 +386,7 @@ All selected brokers and owners have been notified about this shipment opportuni
         bidClosingDate: getDefaultBidClosingDate(),
         bidClosingTime: getDefaultBidClosingTime(),
       });
+
       setShowOtherFrom(false);
       setShowOtherTo(false);
       setShowOtherVehicle(false);
@@ -413,9 +403,10 @@ All selected brokers and owners have been notified about this shipment opportuni
       setAvailableBrokers([]);
       setSelectedOwners([]);
       setSelectedBrokers([]);
+      
     } catch (error) {
-      setError('Error pushing shipment to brokers. Please try again.');
-      console.error('Error pushing to brokers:', error);
+      setError('Error saving selection. Please try again.');
+      console.error('Error saving selection:', error);
     } finally {
       setIsSubmitting(false);
     }
