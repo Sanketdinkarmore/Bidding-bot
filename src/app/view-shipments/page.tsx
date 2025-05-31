@@ -17,11 +17,13 @@ interface ShipmentData {
   dropLocation: string;
   remark?: string;
   createdAt: string;
-  highestBid?: {
+  lowestBid?: {
     phone: string;
     amount: number;
     timestamp: string;
   };
+  bidClosingDateTime: string
+
 }
 
 type SortField = 'loadingDate' | 'createdAt';
@@ -45,11 +47,12 @@ export default function ViewShipmentsPage() {
 
   useEffect(() => {
     filterAndSortShipments();
-  }, [shipments, searchTerm, sortField, sortOrder, selectedVehicleType, selectedDateRange]);
+  }, [shipments, searchTerm, sortField, sortOrder, selectedVehicleType, selectedDateRange,]);
 
   const fetchShipments = async () => {
     setIsLoading(true);
     setError(null);
+
     try {
       const response = await fetch('/api/shipments');
       if (!response.ok) {
@@ -59,9 +62,9 @@ export default function ViewShipmentsPage() {
       // Map shipmentDetails fields to top-level for UI compatibility
       const mapped = data.map((item: any) => {
         // Find highest bid if bids exist
-        const highestBid = item.bids && item.bids.length > 0
-          ? item.bids.reduce((highest: any, current: any) => 
-              (!highest || current.amount > highest.amount) ? current : highest
+        const lowestBid = item.bids && item.bids.length > 0
+          ? item.bids.reduce((lowest: any, current: any) => 
+              (!lowest || current.amount < lowest.amount) ? current : lowest
             , null)
           : undefined;
 
@@ -79,13 +82,15 @@ export default function ViewShipmentsPage() {
           dropLocation: item.shipmentDetails?.dropLocation || '',
           remark: item.shipmentDetails?.remark || '',
           createdAt: item.createdAt || '',
-          highestBid: highestBid ? {
-            phone: highestBid.phone,
-            amount: highestBid.amount,
-            timestamp: highestBid.timestamp
+          bidClosingDateTime: item.shipmentDetails.bidClosingDateTime || '',
+          lowestBid: lowestBid ? {
+            phone: lowestBid.phone,
+            amount: lowestBid.amount,
+            timestamp: lowestBid.timestamp
           } : undefined
         };
       });
+
       setShipments(mapped);
       setFilteredShipments(mapped);
     } catch (error) {
@@ -97,10 +102,16 @@ export default function ViewShipmentsPage() {
   };
 
   // Function to get shipment status based on bidding time
-  const getShipmentStatus = (loadingDate: string, loadingTime: string) => {
+  const getShipmentStatus = (bidClosingDateTime: string) => {
     try {
-      // Combine loading date and time to get bidding end time
-      const biddingEndTime = new Date(`${loadingDate}T${loadingTime}`);
+      if (!bidClosingDateTime) {
+        return {
+          status: 'No Bid Time',
+          className: 'bg-gray-100 text-gray-800'
+        };
+      }
+
+      const biddingEndTime = new Date(bidClosingDateTime);
       const currentTime = new Date();
       
       // Calculate time difference in milliseconds
@@ -133,6 +144,38 @@ export default function ViewShipmentsPage() {
         status: 'Active',
         className: 'bg-gray-100 text-gray-800'
       };
+    }
+  };
+
+  // Function to calculate and format time remaining
+  const getTimeRemaining = (bidClosingDateTime: string) => {
+    try {
+      if (!bidClosingDateTime) {
+        return 'No bid time set';
+      }
+
+      const biddingEndTime = new Date(bidClosingDateTime);
+      const currentTime = new Date();
+      const timeDiff = biddingEndTime.getTime() - currentTime.getTime();
+
+      if (timeDiff <= 0) {
+        return 'Bidding closed';
+      }
+
+      const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (days > 0) {
+        return `${days}d ${hours}h ${minutes}m`;
+      } else if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      } else {
+        return `${minutes}m`;
+      }
+    } catch (error) {
+      console.error('Error calculating time remaining:', error);
+      return 'Invalid date';
     }
   };
 
@@ -499,7 +542,7 @@ export default function ViewShipmentsPage() {
                 {/* Header Row */}
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                   <div className="flex justify-between items-start">
-                    <div className="flex-1">
+                    <div className="">
                       <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
                           <span className="text-lg font-semibold text-gray-900">{shipment.selectFrom}</span>
@@ -509,20 +552,44 @@ export default function ViewShipmentsPage() {
                           <span className="text-lg font-semibold text-gray-900">{shipment.selectTo}</span>
                         </div>
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          getShipmentStatus(shipment.loadingDate, shipment.loadingTime).className
+                          getShipmentStatus(shipment.bidClosingDateTime).className
                         }`}>
-                          {getShipmentStatus(shipment.loadingDate, shipment.loadingTime).status}
+                          {getShipmentStatus(shipment.bidClosingDateTime).status}
                         </span>
                       </div>
+
                       <p className="text-sm text-gray-500 mt-1">ID: {shipment._id.slice(-8)}</p>
                     </div>
                     
-                    {shipment.highestBid && (
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-600">₹{shipment.highestBid.amount.toLocaleString()}</div>
-                        <p className="text-xs text-gray-500">Highest Bid</p>
+                    <div className="text-right flex gap-x-4 items-center">
+                      {shipment.lowestBid && (
+                        <div className="mb-2">
+                          <div className="text-lg font-bold text-green-600">₹{shipment.lowestBid.amount.toLocaleString()}</div>
+                          <p className="text-xs text-gray-500">Lowest Bid</p>
+                        </div>
+                      )}
+                      
+                      {/* Bid Closing Time */}
+                      <div className="bg-gray-50 px-3 py-2 rounded-lg border">
+                        <p className="text-xs font-medium text-gray-700">Bid Closing</p>
+                        {shipment.bidClosingDateTime ? (
+                          <>
+                            <p className="text-sm font-semibold text-gray-900">
+                              {getTimeRemaining(shipment.bidClosingDateTime)}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {new Date(shipment.bidClosingDateTime).toLocaleDateString('en-IN')} at{' '}
+                              {new Date(shipment.bidClosingDateTime).toLocaleTimeString('en-IN', { 
+                                hour: '2-digit', 
+                                minute: '2-digit' 
+                              })}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-sm text-gray-500">Not set</p>
+                        )}
                       </div>
-                    )}
+                    </div>
                   </div>
                 </div>
 
@@ -560,16 +627,16 @@ export default function ViewShipmentsPage() {
                   </div>
 
                   {/* Bid Details */}
-                  {shipment.highestBid && (
+                  {shipment.lowestBid && (
                     <div className="mt-4 pt-4 border-t border-gray-100">
                       <div className="flex justify-between items-center">
                         <div>
                           <p className="text-sm font-medium text-gray-700">Bidder Contact</p>
-                          <p className="text-sm text-gray-900">{shipment.highestBid.phone}</p>
+                          <p className="text-sm text-gray-900">{shipment.lowestBid.phone}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium text-gray-700">Bid Time</p>
-                          <p className="text-sm text-gray-900">{new Date(shipment.highestBid.timestamp).toLocaleString()}</p>
+                          <p className="text-sm text-gray-900">{new Date(shipment.lowestBid.timestamp).toLocaleString()}</p>
                         </div>
                       </div>
                     </div>
