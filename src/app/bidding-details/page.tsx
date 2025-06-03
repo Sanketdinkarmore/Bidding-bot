@@ -5,28 +5,6 @@ import { useSearchParams } from "next/navigation";
 import AddBrokerDialog from "./AddBrokerDialog";
 import ExtendBiddingDialog from "./ExtendBiddingDialog";
 
-// interface ShipmentData {
-//   _id: string;
-//   numberOfPackages: number;
-//   loadingDate: string;
-//   loadingTime: string;
-//   pickupLocation: string;
-//   selectFrom: string;
-//   selectTo: string;
-//   vehicleType: string;
-//   totalWeight?: number;
-//   totalVolume?: number;
-//   dropLocation: string;
-//   remark?: string;
-//   createdAt: string;
-//   customerName?: string;
-//   material?: string;
-//   minimumBids?: string;
-//   bidToleranceAmount?: string;
-//   refPrice?: string;
-//   orderInfo?: string;
-// }
-
 function BiddingDetailsContent() {
   const searchParams = useSearchParams();
   const shipmentId = searchParams.get("id");
@@ -46,24 +24,6 @@ function BiddingDetailsContent() {
   const [isAddBrokerDialogOpen, setIsAddBrokerDialogOpen] = useState(false); // Track dialog state
   const [selectedBrokerIds, setSelectedBrokerIds] = useState<string[]>([]); // Track selected broker IDs
   const [isExtendBiddingDialogOpen, setIsExtendBiddingDialogOpen] = useState(false); // Track extend bidding dialog state
-
-  // Function to create a unique identifier for a bid
-  // const createBidIdentifier = (bid: any) => {
-  //   // Create a comprehensive identifier using phone, amount, brokerName, and timestamp
-  //   const timestamp = bid.timestamp || bid.createdAt || 'no-timestamp';
-  //   return `${bid.phone || 'unknown'}-${bid.amount || '0'}-${bid.brokerName || 'unknown'}-${timestamp}`;
-  // };
-
-  // // Function to find new bids by comparing with previous bids
-  // const findNewBids = (currentBids: any[], previousBids: any[]) => {
-  //   const previousBidIdentifiers = new Set(
-  //     previousBids.map(bid => createBidIdentifier(bid))
-  //   );
-    
-  //   return currentBids.filter(bid => 
-  //     !previousBidIdentifiers.has(createBidIdentifier(bid))
-  //   );
-  // };
 
   // Create consistent unique IDs for bids
   const getBidId = (bid: any, originalIndex: number) => {
@@ -198,6 +158,7 @@ function BiddingDetailsContent() {
   if (loading) {
     return <div className="flex justify-center items-center min-h-[250px] bg-gray-50 py-10">Loading...</div>;
   }
+
   if (error || !shipment) {
     return <div className="flex justify-center items-center min-h-[250px] bg-gray-50 py-10 text-red-600">{error || "Shipment not found"}</div>;
   }
@@ -212,18 +173,8 @@ function BiddingDetailsContent() {
     );
   };
 
-  // Get bid IDs of selected winners for compatibility with existing code
-  // const selectedWinners = bids
-  //   .filter(bid => isBidSelectedWinner(bid))
-  //   .map((bid) => getBidId(bid, bids.indexOf(bid)));
-
   // Mock extra fields for top section
-  const customerName = shipment.customerName || "HINDUSTAN PETROLEUM CORPORATION LIMITED";
-  const material = shipment.material || "BITUMEN VG 30";
-  const minimumBids = shipment.minimumBids || "5 (3)";
-  const bidToleranceAmount = shipment.bidToleranceAmount || "₹ 500";
   const refPrice = shipment.refPrice || "REF. PRICE ₹ 1 perMT";
-  const orderInfo = shipment.orderInfo || "1 Order, 8 Loads";
 
   // Add these computed values after fetching shipment
   const pickup = shipment?.shipmentDetails?.pickupLocation || shipment?.pickupLocation || shipment?.selectFrom || '';
@@ -462,6 +413,7 @@ function BiddingDetailsContent() {
     // Refresh the data after successful extension
     fetchLatestData(false, true);
   };
+  
 
   return (
     <>
@@ -473,7 +425,7 @@ function BiddingDetailsContent() {
               <button className="text-blue-600 hover:bg-blue-50 rounded-full p-1 mr-2" onClick={() => window.history.back()}>
                 <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
               </button>
-              <span className="text-lg font-semibold text-gray-800">Auction:- {shipment._id}</span>
+              <span className="text-lg font-semibold text-gray-800">Auction:- {shipment?.orderId}</span>
             </div>
             <div className="flex items-center gap-3">
               {/* Refresh Button */}
@@ -540,13 +492,6 @@ function BiddingDetailsContent() {
                   </div>
                 </div>
               )}
-              
-              <button className="border border-blue-500 text-blue-600 font-semibold rounded px-4 py-1 hover:bg-blue-50">
-                Bid Detail 
-                <svg className="inline ml-1" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M19 9l-7 7-7-7"/>
-                </svg>
-              </button>
             </div>
           </div>
 
@@ -556,55 +501,38 @@ function BiddingDetailsContent() {
               {/* Order Info Block */}
               <div className="flex flex-col min-w-[180px]">
                 <div className="text-xs text-gray-500">Order ID</div>
-                <div className="font-semibold text-gray-800">{shipment._id}</div>
-                <div className="text-xs text-gray-500 mt-2">Customer Name</div>
-                <div className="font-semibold text-gray-800">{customerName}</div>
-                <div className="text-xs text-gray-500 mt-2 flex items-center gap-1">
-                  Order Info <a href="#" className="text-blue-600 hover:underline text-xs ml-1">Show detail</a>
-                </div>
-                <div className="text-gray-700 text-xs">{orderInfo}</div>
+                <div className="font-semibold text-gray-800">{shipment?.orderId}</div>
+                <div className="text-xs text-gray-500 mt-2">Req. Truck Type & Qty.</div>
+                <div className="font-semibold text-gray-800">{reqTruckType} | {reqQty}</div>
               </div>
+
               {/* Pickup Block */}
               <div className="flex flex-col min-w-[140px]">
                 <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
-                  <span className="inline-block w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
+                  <span className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center">
                     <svg width="12" height="12" fill="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
                   </span>
                   Pickup
                 </div>
                 <div className="font-semibold text-gray-800">{pickup}</div>
-                <div className="text-xs text-gray-400">13KHLP</div>
-                <div className="text-xs text-gray-500 mt-2">Material</div>
-                <div className="font-semibold text-gray-800">{material}</div>
               </div>
+
               {/* Delivery Block */}
               <div className="flex flex-col min-w-[140px]">
                 <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
-                  <span className="inline-block w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
+                  <span className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center">
                     <svg width="12" height="12" fill="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
                   </span>
                   Delivery
                 </div>
                 <div className="font-semibold text-gray-800">{delivery}</div>
-                <div className="text-xs text-gray-400">04PANA</div>
-                <div className="text-xs text-gray-500 mt-2">Req. Truck Type & Qty.</div>
-                <div className="font-semibold text-gray-800">{reqTruckType} | {reqQty}</div>
+                
               </div>
-              {/* Minimum Bids & Bid Tolerance */}
-              <div className="flex flex-col min-w-[140px]">
-                <div className="text-xs text-gray-500">Minimum bids (With price)</div>
-                <div className="font-semibold text-gray-800">{minimumBids}</div>
-                <div className="text-xs text-gray-500 mt-2">Bid Tolerance Amount</div>
-                <input type="text" value={bidToleranceAmount} readOnly className="border border-gray-300 rounded px-2 py-1 w-24 text-sm mt-1 text-black" />
-              </div>
+
               {/* Placement Date & Ref Price */}
               <div className="flex flex-col items-end min-w-[200px] ml-auto">
                 <div className="text-xs text-gray-500">Placement Date</div>
                 <div className="text-lg font-bold text-gray-900 mb-2">{placementDate}</div>
-                <div className="inline-block mt-1 px-3 py-1 bg-blue-500 text-white rounded font-semibold text-sm shadow-sm">
-                  {refPrice}
-                </div>
-                <div className="text-xs text-gray-400 mt-2">| 290 / 290.00 MT</div>
               </div>
             </div>
           </div>
@@ -658,12 +586,14 @@ function BiddingDetailsContent() {
                     {filteredBids.length}
                   </span>
                 </div>
+
                 <div className="text-sm">
                   <span className="font-medium text-gray-700">Selected Winners:</span>
                   <span className="ml-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
                     {shipment.selectedWinners?.length || 0}
                   </span>
                 </div>
+
                 {newBidsCount > 0 && (
                   <div className="text-sm">
                     <button 
@@ -674,6 +604,7 @@ function BiddingDetailsContent() {
                     </button>
                   </div>
                 )}
+
                 {isPolling && (
                   <div className="text-sm flex items-center gap-1 text-blue-600">
                     <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
@@ -683,6 +614,7 @@ function BiddingDetailsContent() {
                     <span className="text-xs">Refreshing...</span>
                   </div>
                 )}
+
                 {filteredBids.length > 0 && (
                   <div className="text-sm">
                     <span className="font-medium text-gray-700">Lowest Bid:</span>
@@ -691,6 +623,7 @@ function BiddingDetailsContent() {
                     </span>
                   </div>
                 )}
+                
                 {filteredBids.length > 0 && (
                   <div className="text-sm">
                     <span className="font-medium text-gray-700">Highest Bid:</span>

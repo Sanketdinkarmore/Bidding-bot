@@ -311,7 +311,6 @@ export default function CreateShipmentPage() {
 
   // Handle owner checkbox change
   const handleOwnerChange = (ownerId: string) => {
-    console.log('Owner change triggered for ID:', ownerId);
     setSelectedOwners(prev => {
       const isCurrentlySelected = prev.includes(ownerId);
       const newSelection = isCurrentlySelected 

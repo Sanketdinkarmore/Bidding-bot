@@ -9,6 +9,7 @@ export default function MasterPage() {
   const [destinationCityFilter, setDestinationCityFilter] = useState('');
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState('');
   const [originCityFilter, setOriginCityFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('broker');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
@@ -16,16 +17,19 @@ export default function MasterPage() {
   const [showDestinationDropdown, setShowDestinationDropdown] = useState(false);
   const [showVehicleTypeDropdown, setShowVehicleTypeDropdown] = useState(false);
   const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   
   // Search states for dropdowns
   const [destinationSearchTerm, setDestinationSearchTerm] = useState('');
   const [vehicleTypeSearchTerm, setVehicleTypeSearchTerm] = useState('');
   const [originSearchTerm, setOriginSearchTerm] = useState('');
+  const [typeSearchTerm, setTypeSearchTerm] = useState('');
 
   // Refs for dropdowns
   const destinationDropdownRef = useRef<HTMLDivElement>(null);
   const vehicleTypeDropdownRef = useRef<HTMLDivElement>(null);
   const originDropdownRef = useRef<HTMLDivElement>(null);
+  const typeDropdownRef = useRef<HTMLDivElement>(null);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -42,6 +46,10 @@ export default function MasterPage() {
         setShowOriginDropdown(false);
         setOriginSearchTerm('');
       }
+      if (typeDropdownRef.current && !typeDropdownRef.current.contains(event.target as Node)) {
+        setShowTypeDropdown(false);
+        setTypeSearchTerm('');
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -54,9 +62,10 @@ export default function MasterPage() {
     destinationCity: destinationCityFilter,
     vehicleType: vehicleTypeFilter,
     originCity: originCityFilter,
+    type: typeFilter,
     page: currentPage,
     limit: pageSize
-  }), [searchTerm, destinationCityFilter, vehicleTypeFilter, originCityFilter, currentPage, pageSize]);
+  }), [searchTerm, destinationCityFilter, vehicleTypeFilter, originCityFilter, typeFilter, currentPage, pageSize]);
 
   // React Query for data fetching
   const {
@@ -80,7 +89,7 @@ export default function MasterPage() {
     select: (data) => ({
       destinationCities: [...new Set(data.data.map(row => row.destinationCity))],
       vehicleTypes: [...new Set(data.data.map(row => row.ftlType))],
-      originCities: [...new Set(data.data.map(row => row.originCity))]
+      originCities: [...new Set(data.data.map(row => row.originCity))],
     })
   });
 
@@ -106,6 +115,15 @@ export default function MasterPage() {
     );
   }, [allDataForFilters?.originCities, originSearchTerm]);
 
+  // Filter types (broker/owner) based on search term - now using hardcoded values
+  const filteredTypes = useMemo(() => {
+    const types = ['broker', 'owner']; // Hardcoded values
+    if (typeSearchTerm === '') return types; // Return all types when search is empty
+    return types.filter(type =>
+      type.toLowerCase().includes(typeSearchTerm.toLowerCase())
+    );
+  }, [typeSearchTerm]);
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -115,6 +133,7 @@ export default function MasterPage() {
     setDestinationCityFilter('');
     setVehicleTypeFilter('');
     setOriginCityFilter('');
+    setTypeFilter('');
     setCurrentPage(1);
   };
 
@@ -144,6 +163,19 @@ export default function MasterPage() {
     setShowOriginDropdown(false);
     setOriginSearchTerm('');
     setCurrentPage(1);
+  };
+
+  const handleTypeSelect = (type: string) => {
+    setTypeFilter(type);
+    setShowTypeDropdown(false);
+    setTypeSearchTerm('');
+    setCurrentPage(1);
+  };
+
+  // Handler for type filter focus
+  const handleTypeFilterFocus = () => {
+    setShowTypeDropdown(true);
+    setTypeSearchTerm(''); // Clear search term to show all options
   };
 
   // Format currency
@@ -311,7 +343,7 @@ export default function MasterPage() {
 
         {/* Search and Filters Section */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {/* Search Bar */}
             <div className="lg:col-span-1">
               <label htmlFor="search" className="block text-sm font-medium text-gray-700 mb-2">
@@ -641,7 +673,108 @@ export default function MasterPage() {
               </div>
             </div>
 
-            
+            {/* Type Filter (Owner/Broker) */}
+            <div className="relative">
+              <label htmlFor="type-filter" className="block text-sm font-medium text-gray-700 mb-2">
+                Type
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  id="type-filter"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder={typeFilter ? "" : "Owner/Broker..."}
+                  value={typeFilter ? typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) : typeSearchTerm}
+                  onChange={(e) => setTypeSearchTerm(e.target.value)}
+                  onFocus={handleTypeFilterFocus}
+                />
+                {showTypeDropdown && (
+                  <div ref={typeDropdownRef} className="absolute z-30 mt-2 w-full bg-white shadow-2xl rounded-xl border-2 border-gray-100 overflow-hidden">
+                    {/* Search Header */}
+                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
+                      <div className="relative">
+                        <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input
+                          type="text"
+                          value={typeSearchTerm}
+                          onChange={(e) => setTypeSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm text-black"
+                          placeholder="Owner or Broker..."
+                          autoFocus
+                        />
+                        {typeSearchTerm && (
+                          <button
+                            type="button"
+                            onClick={() => setTypeSearchTerm('')}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Options List */}
+                    <div className="max-h-64 overflow-y-auto">
+                      {/* Clear option */}
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect('')}
+                        className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors duration-150 border-b border-gray-50 ${
+                          !typeFilter ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span className="font-medium">All Types</span>
+                        </div>
+                      </button>
+                      
+                      {filteredTypes.length > 0 ? (
+                        filteredTypes.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => handleTypeSelect(type)}
+                            className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors duration-150 border-b border-gray-50 last:border-b-0 ${
+                              typeFilter === type ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-900'
+                            }`}
+                          >
+                            <div className="flex items-center">
+                              <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              <span className="font-medium">
+                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                              </span>
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-8 text-center text-gray-500">
+                          <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <p className="font-medium text-gray-600">No types found</p>
+                          <p className="text-sm text-gray-500 mt-1">Try adjusting your search</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Clear Filters Button */}
@@ -702,6 +835,9 @@ export default function MasterPage() {
                       Vehicle Type
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
+                      Type
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">
                       Amount
                     </th>
                   </tr>
@@ -712,8 +848,8 @@ export default function MasterPage() {
                       <tr key={row.id} className="hover:bg-gray-50 transition-colors duration-150">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div>
-                            <div className="font-medium">{row.brokerName}</div>
-                            <div className="text-xs text-gray-500">{row.brokerMobile}</div>
+                            <div className="font-medium">{row.name}</div>
+                            <div className="text-xs text-gray-500">{row.number}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -727,6 +863,13 @@ export default function MasterPage() {
                             {row.ftlType}
                           </span>
                         </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            row.type === "broker" ? "bg-green-100 text-green-800" : "bg-purple-100 text-purple-800"
+                          }`}>
+                            {row.type === "broker" ? "Broker" : "Owner"}
+                          </span>
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
                           {formatCurrency(row.amount)}
                         </td>
@@ -734,7 +877,7 @@ export default function MasterPage() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={4} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                         <div className="flex flex-col items-center">
                           <svg className="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

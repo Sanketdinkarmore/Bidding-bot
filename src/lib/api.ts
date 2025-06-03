@@ -2,11 +2,7 @@ import axios from 'axios';
 
 export interface TableRow {
   id: string;
-  challanNo: string;
-  dispatchTime: string;
   routeType: string;
-  placementSource: string;
-  vehicleNo: string;
   ftlType: string;
   originBranch: string;
   destinationBranch: string;
@@ -14,11 +10,9 @@ export interface TableRow {
   destinationCity: string;
   distance: number;
   amount: number;
-  brokerName: string;
-  brokerMobile: number;
-  brokerPan: string;
-  logicalVendor: string;
-  gcnos: string;
+  name: string;
+  number: string;
+  type: string;
 }
 
 export interface PaginatedResponse {
@@ -35,6 +29,7 @@ export interface MasterDataFilters {
   destinationCity?: string;
   vehicleType?: string;
   originCity?: string;
+  type?: string;
   page?: number;
   limit?: number;
 }
@@ -45,6 +40,7 @@ export const fetchMasterData = async (filters: MasterDataFilters = {}): Promise<
     destinationCity = '',
     vehicleType = '',
     originCity = '',
+    type = '',
     page = 1,
     limit = 10
   } = filters;
@@ -56,6 +52,7 @@ export const fetchMasterData = async (filters: MasterDataFilters = {}): Promise<
         destinationCity, 
         vehicleType, 
         originCity, 
+        type,
         page, 
         limit 
       }

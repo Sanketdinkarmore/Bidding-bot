@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const collection = db.collection('selectedOwnerBrokers');
 
     const date = new Date();
-    const uniqueId = `${date.toLocaleString("default", { month: "short" }).toUpperCase()}${date.getDate()}${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderId = `${date.toLocaleString("default", { month: "short" }).toUpperCase()}${date.getDate()}${Math.floor(1000 + Math.random() * 90000)}`;
 
     const result = await collection.insertOne({
       ...selectionData,
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
         ...selectionData.shipmentDetails,
         bidClosingDateTime: new Date(selectionData.shipmentDetails.bidClosingDateTime),
       },
-      uniqueId,
+      orderId,
       createdAt: new Date(),
     });
 

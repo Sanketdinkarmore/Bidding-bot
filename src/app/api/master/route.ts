@@ -16,11 +16,15 @@ interface MasterDataDocument {
   "Challan Destination City": string;
   "Challan Total Distance": number;
   "Challan Amount": number;
-  "Broker Name": string;
-  "Broker Mobile": number;
-  "Broker Pan No": string;
+  "Broker Name"?: string;
+  "Broker Mobile"?: number;
+  "Broker Pan No"?: string;
+  "Owner Saathi Name"?: string;
+  "Owner Saathi Mobile"?: number;
+  "Owner Pan No"?: string;
   "Logical Vendor": string;
   "GCNOs": string;
+  type: string;
 }
 
 export async function GET(request: NextRequest) {
@@ -32,13 +36,15 @@ export async function GET(request: NextRequest) {
     const destinationCity = searchParams.get('destinationCity') || '';
     const vehicleType = searchParams.get('vehicleType') || '';
     const originCity = searchParams.get('originCity') || '';
+    const type = searchParams.get('type') || '';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
 
     // Connect to database
     const client = await clientPromise;
     const db = client.db('bidding-bot'); // Replace with your actual database name
-    const collection = db.collection('broker'); // Replace with your actual collection name
+    const brokerCollection = db.collection('broker');
+    const ownerCollection = db.collection('owner');
 
     // Build filter query
     const filter: any = {};
@@ -48,9 +54,7 @@ export async function GET(request: NextRequest) {
       filter.$or = [
         { "Challan No": { $regex: search, $options: 'i' } },
         { "Vehicle No": { $regex: search, $options: 'i' } },
-        { "Broker Name": { $regex: search, $options: 'i' } },
         { "GCNOs": { $regex: search, $options: 'i' } },
-        { "Broker Pan No": { $regex: search, $options: 'i' } }
       ];
     }
 
@@ -72,25 +76,37 @@ export async function GET(request: NextRequest) {
     // Calculate pagination
     const skip = (page - 1) * limit;
 
-    // Get total count for pagination
-    const total = await collection.countDocuments(filter);
+    // Get total count for pagination from both collections
+    const brokerTotal = await brokerCollection.countDocuments(filter);
+    const ownerTotal = await ownerCollection.countDocuments(filter);
+    const total = brokerTotal + ownerTotal;
     const totalPages = Math.ceil(total / limit);
 
-    // Fetch paginated data
-    const data = await collection
-      .find(filter)
-      .skip(skip)
-      .limit(limit)
-      .toArray() as MasterDataDocument[];
+    // Determine how many documents to fetch from each collection
+    let brokerData: MasterDataDocument[] = [];
+    let ownerData: MasterDataDocument[] = [];
+    
+    // Filter by type if specified
+    if (type === 'broker') {
+      // Only fetch broker data
+      brokerData = await brokerCollection
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .toArray() as MasterDataDocument[];
+    } else if (type === 'owner') {
+      // Only fetch owner data
+      ownerData = await ownerCollection
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .toArray() as MasterDataDocument[];
+    }
 
-    // Transform data for frontend
-    const transformedData = data.map((item) => ({
+    // Transform broker data for frontend
+    const transformedBrokerData = brokerData.map((item) => ({
       id: item._id.toString(),
-      challanNo: item["Challan No"],
-      dispatchTime: item["Vehicle Dispatch Time Stamp"],
       routeType: item["Route Type"],
-      placementSource: item["Placement Source"],
-      vehicleNo: item["Vehicle No"],
       ftlType: item["FTLType"],
       originBranch: item["Challan Origin Control Branch"],
       destinationBranch: item["Challan Destination Control Branch"],
@@ -98,12 +114,29 @@ export async function GET(request: NextRequest) {
       destinationCity: item["Challan Destination City"],
       distance: item["Challan Total Distance"],
       amount: item["Challan Amount"],
-      brokerName: item["Broker Name"],
-      brokerMobile: item["Broker Mobile"],
-      brokerPan: item["Broker Pan No"],
-      logicalVendor: item["Logical Vendor"],
-      gcnos: item["GCNOs"]
+      name: item["Broker Name"],
+      number: item["Broker Mobile"],
+      type: "broker"
     }));
+
+    // Transform owner data for frontend
+    const transformedOwnerData = ownerData.map((item) => ({
+      id: item._id.toString(),
+      routeType: item["Route Type"],
+      ftlType: item["FTLType"],
+      originBranch: item["Challan Origin Control Branch"],
+      destinationBranch: item["Challan Destination Control Branch"],
+      originCity: item["Challan Origin City"],
+      destinationCity: item["Challan Destination City"],
+      distance: item["Challan Total Distance"],
+      amount: item["Challan Amount"],
+      name: item["Owner Saathi Name"],
+      number: item["Owner Saathi Mobile"],
+      type: "owner"
+    }));
+
+    // Merge the data
+    const transformedData = [...transformedBrokerData, ...transformedOwnerData];
 
     // Return paginated response
     return NextResponse.json({
