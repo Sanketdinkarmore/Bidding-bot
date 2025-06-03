@@ -3,6 +3,7 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMasterData, MasterDataFilters } from '../../lib/api';
+import { LocationAndVehicleTypeResponse } from '../../types';
 
 export default function MasterPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -81,47 +82,51 @@ export default function MasterPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Get unique values for dropdowns from the first page of data
-  const { data: allDataForFilters } = useQuery({
-    queryKey: ['masterDataFilters'],
-    queryFn: () => fetchMasterData({ limit: 1000 }), // Get all data for filter options
+  // Get unique values for dropdowns from the "Location and vehicle type" collection
+  const { data: allDataForFilters, isLoading: isLoadingFilters } = useQuery<LocationAndVehicleTypeResponse>({
+    queryKey: ['locationAndVehicleTypes'],
+    queryFn: async () => {
+      const response = await fetch('/api/locations');
+      if (!response.ok) {
+        throw new Error('Failed to fetch locations and vehicle types');
+      }
+      return response.json() as Promise<LocationAndVehicleTypeResponse>;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    select: (data) => ({
-      destinationCities: [...new Set(data.data.map(row => row.destinationCity))],
-      vehicleTypes: [...new Set(data.data.map(row => row.ftlType))],
-      originCities: [...new Set(data.data.map(row => row.originCity))],
-    })
   });
+
+  console.log(allDataForFilters);
 
   // Filter options based on search terms
   const filteredDestinationCities = useMemo(() => {
-    if (!allDataForFilters?.destinationCities) return [];
-    return allDataForFilters.destinationCities.filter(city =>
-      city.toLowerCase().includes(destinationSearchTerm.toLowerCase())
-    );
-  }, [allDataForFilters?.destinationCities, destinationSearchTerm]);
+    if (!allDataForFilters?.locations) return [];
+    return allDataForFilters.locations
+      .filter((location: {id: string, name: string}) => location.name?.toLowerCase().includes(destinationSearchTerm.toLowerCase()))
+      .map((location: {id: string, name: string}) => location.name);
+  }, [allDataForFilters?.locations, destinationSearchTerm]);
 
   const filteredVehicleTypes = useMemo(() => {
     if (!allDataForFilters?.vehicleTypes) return [];
-    return allDataForFilters.vehicleTypes.filter(type =>
-      type.toLowerCase().includes(vehicleTypeSearchTerm.toLowerCase())
-    );
+    return allDataForFilters.vehicleTypes
+      .filter((type: string) => type?.toLowerCase().includes(vehicleTypeSearchTerm.toLowerCase()));
   }, [allDataForFilters?.vehicleTypes, vehicleTypeSearchTerm]);
 
   const filteredOriginCities = useMemo(() => {
-    if (!allDataForFilters?.originCities) return [];
-    return allDataForFilters.originCities.filter(city =>
-      city.toLowerCase().includes(originSearchTerm.toLowerCase())
-    );
-  }, [allDataForFilters?.originCities, originSearchTerm]);
+    if (!allDataForFilters?.locations) return [];
+    return allDataForFilters.locations
+      .filter((location: {id: string, name: string}) => location.name?.toLowerCase().includes(originSearchTerm.toLowerCase()))
+      .map((location: {id: string, name: string}) => location.name);
+  }, [allDataForFilters?.locations, originSearchTerm]);
 
   // Filter types (broker/owner) based on search term - now using hardcoded values
   const filteredTypes = useMemo(() => {
-    const types = ['broker', 'owner']; // Hardcoded values
-    if (typeSearchTerm === '') return types; // Return all types when search is empty
-    return types.filter(type =>
-      type.toLowerCase().includes(typeSearchTerm.toLowerCase())
-    );
+    // Always use these two fixed options
+    const types = ['broker', 'owner'];
+    
+    // Always return all options if no search, otherwise filter
+    return typeSearchTerm.trim() === '' 
+      ? types 
+      : types.filter(type => type.toLowerCase().includes(typeSearchTerm.toLowerCase()));
   }, [typeSearchTerm]);
 
   const handlePageChange = (page: number) => {
@@ -144,21 +149,21 @@ export default function MasterPage() {
   };
 
   // Custom dropdown handlers
-  const handleDestinationSelect = (city: string) => {
+  const handleDestinationSelect = (city: string): void => {
     setDestinationCityFilter(city);
     setShowDestinationDropdown(false);
     setDestinationSearchTerm('');
     setCurrentPage(1);
   };
 
-  const handleVehicleTypeSelect = (type: string) => {
+  const handleVehicleTypeSelect = (type: string): void => {
     setVehicleTypeFilter(type);
     setShowVehicleTypeDropdown(false);
     setVehicleTypeSearchTerm('');
     setCurrentPage(1);
   };
 
-  const handleOriginSelect = (city: string) => {
+  const handleOriginSelect = (city: string): void => {
     setOriginCityFilter(city);
     setShowOriginDropdown(false);
     setOriginSearchTerm('');
@@ -175,7 +180,7 @@ export default function MasterPage() {
   // Handler for type filter focus
   const handleTypeFilterFocus = () => {
     setShowTypeDropdown(true);
-    setTypeSearchTerm(''); // Clear search term to show all options
+    // Don't clear the search term so input stays consistent
   };
 
   // Format currency
@@ -436,7 +441,7 @@ export default function MasterPage() {
                       </button>
                       
                       {filteredOriginCities.length > 0 ? (
-                        filteredOriginCities.map((city) => (
+                        (filteredOriginCities as string[]).map((city) => (
                           <button
                             key={city}
                             type="button"
@@ -539,7 +544,7 @@ export default function MasterPage() {
                       </button>
                       
                       {filteredDestinationCities.length > 0 ? (
-                        filteredDestinationCities.map((city) => (
+                        (filteredDestinationCities as string[]).map((city) => (
                           <button
                             key={city}
                             type="button"
@@ -641,7 +646,7 @@ export default function MasterPage() {
                       </button>
                       
                       {filteredVehicleTypes.length > 0 ? (
-                        filteredVehicleTypes.map((type) => (
+                        (filteredVehicleTypes as string[]).map((type) => (
                           <button
                             key={type}
                             type="button"
@@ -684,45 +689,14 @@ export default function MasterPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-                <input
-                  type="text"
-                  id="type-filter"
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={typeFilter ? "" : "Owner/Broker..."}
-                  value={typeFilter ? typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) : typeSearchTerm}
-                  onChange={(e) => setTypeSearchTerm(e.target.value)}
-                  onFocus={handleTypeFilterFocus}
-                />
+                <div 
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white text-gray-900 cursor-pointer"
+                  onClick={handleTypeFilterFocus}
+                >
+                  {typeFilter ? typeFilter.charAt(0).toUpperCase() + typeFilter.slice(1) : "Select type..."}
+                </div>
                 {showTypeDropdown && (
                   <div ref={typeDropdownRef} className="absolute z-30 mt-2 w-full bg-white shadow-2xl rounded-xl border-2 border-gray-100 overflow-hidden">
-                    {/* Search Header */}
-                    <div className="p-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50">
-                      <div className="relative">
-                        <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input
-                          type="text"
-                          value={typeSearchTerm}
-                          onChange={(e) => setTypeSearchTerm(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-100 text-sm text-black"
-                          placeholder="Owner or Broker..."
-                          autoFocus
-                        />
-                        {typeSearchTerm && (
-                          <button
-                            type="button"
-                            onClick={() => setTypeSearchTerm('')}
-                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
                     {/* Options List */}
                     <div className="max-h-64 overflow-y-auto">
                       {/* Clear option */}
@@ -741,35 +715,36 @@ export default function MasterPage() {
                         </div>
                       </button>
                       
-                      {filteredTypes.length > 0 ? (
-                        filteredTypes.map((type) => (
-                          <button
-                            key={type}
-                            type="button"
-                            onClick={() => handleTypeSelect(type)}
-                            className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors duration-150 border-b border-gray-50 last:border-b-0 ${
-                              typeFilter === type ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-900'
-                            }`}
-                          >
-                            <div className="flex items-center">
-                              <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              <span className="font-medium">
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                              </span>
-                            </div>
-                          </button>
-                        ))
-                      ) : (
-                        <div className="px-4 py-8 text-center text-gray-500">
-                          <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      {/* Always show these two fixed options */}
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect('broker')}
+                        className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors duration-150 border-b border-gray-50 ${
+                          typeFilter === 'broker' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          <p className="font-medium text-gray-600">No types found</p>
-                          <p className="text-sm text-gray-500 mt-1">Try adjusting your search</p>
+                          <span className="font-medium">Broker</span>
                         </div>
-                      )}
+                      </button>
+                      
+                      <button
+                        type="button"
+                        onClick={() => handleTypeSelect('owner')}
+                        className={`w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors duration-150 border-b border-gray-50 ${
+                          typeFilter === 'owner' ? 'bg-blue-100 text-blue-700 font-semibold' : 'text-gray-900'
+                        }`}
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span className="font-medium">Owner</span>
+                        </div>
+                      </button>
                     </div>
                   </div>
                 )}

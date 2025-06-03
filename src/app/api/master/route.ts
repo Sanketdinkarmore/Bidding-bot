@@ -101,6 +101,24 @@ export async function GET(request: NextRequest) {
         .skip(skip)
         .limit(limit)
         .toArray() as MasterDataDocument[];
+    } else {
+      // Fetch both (default behavior)
+      const halfLimit = Math.ceil(limit / 2);
+      
+      brokerData = await brokerCollection
+        .find(filter)
+        .skip(skip < brokerTotal ? skip : brokerTotal)
+        .limit(skip < brokerTotal ? (brokerTotal - skip < halfLimit ? brokerTotal - skip : halfLimit) : 0)
+        .toArray() as MasterDataDocument[];
+      
+      const remainingLimit = limit - brokerData.length;
+      const ownerSkip = Math.max(0, skip - brokerTotal);
+      
+      ownerData = await ownerCollection
+        .find(filter)
+        .skip(ownerSkip)
+        .limit(remainingLimit)
+        .toArray() as MasterDataDocument[];
     }
 
     // Transform broker data for frontend
