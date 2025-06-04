@@ -95,8 +95,6 @@ export default function MasterPage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  console.log(allDataForFilters);
-
   // Filter options based on search terms
   const filteredDestinationCities = useMemo(() => {
     if (!allDataForFilters?.locations) return [];
@@ -190,19 +188,6 @@ export default function MasterPage() {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(amount);
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return dateString; // Return as-is if parsing fails
-    }
   };
 
   // Pagination component
@@ -339,7 +324,7 @@ export default function MasterPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-3 lg:px-4 py-4">
+      <div className="mx-auto px-4 py-4">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Master Data Management</h1>
@@ -364,7 +349,7 @@ export default function MasterPage() {
                   type="text"
                   id="search"
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-black"
-                  placeholder="Search challan, vehicle, broker..."
+                  placeholder="Search by name, challan, vehicle..."
                   value={searchTerm}
                   onChange={(e) => handleFilterChange(setSearchTerm, e.target.value)}
                 />

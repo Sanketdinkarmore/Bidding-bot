@@ -88,10 +88,26 @@ export default function CreateShipmentPage() {
   // New state for owner/broker selection
   const [showOwnerBrokerSelection, setShowOwnerBrokerSelection] = useState(false);
   const [availableOwners, setAvailableOwners] = useState<{ id: string, name: string, amounts: any }[]>([]);
-  const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amounts: any, from: string, to:string, vehicleType: string }[]>([]);
+  const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amounts: any, from: string, to:string, vehicleType: string, phone: string }[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]); // Store owner IDs
   const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]); // Store broker IDs
   const [isFetchingOwnersBrokers, setIsFetchingOwnersBrokers] = useState(false);
+
+  // Add this useEffect to update the bid closing time every minute
+  useEffect(() => {
+    // Update bid closing time every minute while the user is filling the form
+    const intervalId = setInterval(() => {
+      if (!showOwnerBrokerSelection) { // Only update when user is on the form page
+        setFormData(prev => ({
+          ...prev,
+          bidClosingDate: getDefaultBidClosingDate(),
+          bidClosingTime: getDefaultBidClosingTime(),
+        }));
+      }
+    }, 60000); // Update every minute
+
+    return () => clearInterval(intervalId); // Clean up the interval on component unmount
+  }, [showOwnerBrokerSelection]);
 
   useEffect(() => {
     const fetchLocationsAndVehicleTypes = async () => {
@@ -1062,6 +1078,128 @@ export default function CreateShipmentPage() {
                   </div>
                 </div>
 
+                {/* Selected Owners and Brokers Table */}
+                {showOwnerBrokerSelection && (selectedOwners.length > 0 || selectedBrokers.length > 0) && (
+                  <div className="mt-8 border-t-2 border-gray-100 pt-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4">Selected Partners</h3>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Selected Owners Table */}
+                      {selectedOwners.length > 0 && (
+                        <div className="bg-white rounded-xl border border-blue-200 shadow-md overflow-hidden">
+                          <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-blue-800">Selected Owners</h4>
+                              <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-bold">
+                                {selectedOwners.length}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Name
+                                  </th>
+                                  <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Average Rate
+                                  </th>
+                                  <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Action
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {availableOwners.filter(owner => selectedOwners.includes(owner.id)).map(owner => (
+                                  <tr key={owner.id} className="hover:bg-blue-50 transition-colors duration-150">
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                      <div className="text-sm font-medium text-gray-900">{owner.name}</div>
+                                      <div className="text-xs text-gray-500">Vehicle Owner</div>
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        ₹{Math.floor(parseFloat(owner.amounts)).toLocaleString('en-IN')}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                                      <button 
+                                        onClick={() => handleOwnerChange(owner.id)} 
+                                        className="text-red-600 hover:text-red-900 text-sm font-medium"
+                                      >
+                                        Remove
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Selected Brokers Table */}
+                      {selectedBrokers.length > 0 && (
+                        <div className="bg-white rounded-xl border border-green-200 shadow-md overflow-hidden">
+                          <div className="bg-green-50 px-4 py-3 border-b border-green-200">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold text-green-800">Selected Brokers</h4>
+                              <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">
+                                {selectedBrokers.length}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full divide-y divide-gray-200">
+                              <thead className="bg-gray-50">
+                                <tr>
+                                  <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Name
+                                  </th>
+                                  <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Phone
+                                  </th>
+                                  <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Rate
+                                  </th>
+                                  <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Action
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="bg-white divide-y divide-gray-200">
+                                {availableBrokers.filter(broker => selectedBrokers.includes(broker.id)).map(broker => (
+                                  <tr key={broker.id} className="hover:bg-green-50 transition-colors duration-150">
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                      <div className="text-sm font-medium text-gray-900">{broker.name}</div>
+                                      <div className="text-xs text-gray-500">{broker.from} → {broker.to}</div>
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-700">
+                                      {broker.phone}
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        ₹{Math.floor(parseFloat(broker.amounts)).toLocaleString('en-IN')}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                                      <button 
+                                        onClick={() => handleBrokerChange(broker.id)} 
+                                        className="text-red-600 hover:text-red-900 text-sm font-medium"
+                                      >
+                                        Remove
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Form Actions */}
                 <div className="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4 pt-8 border-t-2 border-gray-100">
                   <button
@@ -1296,7 +1434,7 @@ export default function CreateShipmentPage() {
                                       </div>
                                     )}
                                   </div>
-                                  <p className="text-sm text-gray-500 mt-1">Transport Broker</p>
+                                  <p className="text-md text-gray-600">{broker.phone}</p>
                                   
                                   {/* Add route and vehicle information */}
                                   <div className="mt-2 space-y-1.5 flex flex-col">

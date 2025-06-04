@@ -24,11 +24,14 @@ function BiddingDetailsContent() {
   const [isAddBrokerDialogOpen, setIsAddBrokerDialogOpen] = useState(false); // Track dialog state
   const [selectedBrokerIds, setSelectedBrokerIds] = useState<string[]>([]); // Track selected broker IDs
   const [isExtendBiddingDialogOpen, setIsExtendBiddingDialogOpen] = useState(false); // Track extend bidding dialog state
+  const [activeTab, setActiveTab] = useState<'brokers' | 'owners'>('brokers'); // Track active tab
 
   // Create consistent unique IDs for bids
   const getBidId = (bid: any, originalIndex: number) => {
     return bid._id || bid.id || `${bid.phone}-${bid.amount}-${bid.timestamp}` || `bid-${originalIndex}`;
   };
+
+  console.log(shipment)
 
   // Function to fetch latest bids and shipment data
   const fetchLatestData = async (isPollingCall = false, isManualRefresh = false) => {
@@ -540,7 +543,6 @@ function BiddingDetailsContent() {
           {/* Remarks Row */}
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm text-gray-700">Remarks: <span className="text-gray-500">{shipment.remark || 'N/A'}</span> <button className="ml-1 text-xs text-blue-600 hover:underline">✎</button></div>
-            <div className="text-xs text-blue-600 cursor-pointer hover:underline">View Term</div>
           </div>
 
           {/* Search Bar */}
@@ -648,9 +650,9 @@ function BiddingDetailsContent() {
                 </div>
               </div>
             ) : (
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+                  <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th scope="col" className="px-6 py-4 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                         <div className="flex items-center gap-2">
@@ -701,7 +703,7 @@ function BiddingDetailsContent() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-100">
+                  <tbody className="bg-white divide-y divide-gray-100 overflow-y-auto">
                     {sortedBids.map((bid, idx) => {
                       const bidId = getBidId(bid, bids.indexOf(bid)); // Use original array index for stable ID
                       return (
@@ -842,6 +844,108 @@ function BiddingDetailsContent() {
                 </table>
               </div>
             )}
+          </div>
+
+          {/* Selected Owners and Brokers Tabbed Component */}
+          <div className="mt-8">
+            <div className="overflow-hidden bg-white shadow-lg sm:rounded-lg border border-gray-200">
+              {/* Tabs Header */}
+              <div className="flex border-b border-gray-200">
+                <button 
+                  onClick={() => setActiveTab('brokers')}
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                    activeTab === 'brokers' 
+                      ? 'border-b-2 border-blue-500 text-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Selected Brokers {shipment.selectedBrokers?.length ? `(${shipment.selectedBrokers.length})` : '(0)'}
+                </button>
+                <button 
+                  onClick={() => setActiveTab('owners')}
+                  className={`px-6 py-3 text-sm font-medium whitespace-nowrap ${
+                    activeTab === 'owners' 
+                      ? 'border-b-2 border-blue-500 text-blue-600' 
+                      : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  Selected Owners {shipment.selectedOwners?.length ? `(${shipment.selectedOwners.length})` : '(0)'}
+                </button>
+              </div>
+              
+              {/* Tab Content with Vertical Scroll */}
+              <div className="max-h-72 overflow-y-auto">
+                {activeTab === 'brokers' && (
+                  <div className="overflow-x-auto">
+                    {shipment.selectedBrokers && shipment.selectedBrokers.length > 0 ? (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0 z-10">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Phone</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">From</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">To</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Vehicle Type</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {shipment.selectedBrokers.map((broker: any, index: number) => (
+                            <tr key={`broker-${index}`} className="hover:bg-blue-50 transition-all duration-200">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{broker.name || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{broker.phone || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{broker.from || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{broker.to || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{broker.vehicleType || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                {broker.amounts ? `₹ ${broker.amounts.toLocaleString('en-IN')}` : 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">No brokers selected</div>
+                    )}
+                  </div>
+                )}
+
+                {activeTab === 'owners' && (
+                  <div className="overflow-x-auto">
+                    {shipment.selectedOwners && shipment.selectedOwners.length > 0 ? (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 sticky top-0 z-10">
+                          <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Name</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Phone</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">From</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">To</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Vehicle Type</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-100">
+                          {shipment.selectedOwners.map((owner: any, index: number) => (
+                            <tr key={`owner-${index}`} className="hover:bg-blue-50 transition-all duration-200">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{owner.name || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{owner.phone || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{owner.from || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{owner.to || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{owner.vehicleType || 'N/A'}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                                {owner.amounts ? `₹ ${owner.amounts.toLocaleString('en-IN')}` : 'N/A'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">No owners selected</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

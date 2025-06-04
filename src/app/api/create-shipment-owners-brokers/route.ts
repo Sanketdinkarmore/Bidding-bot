@@ -21,15 +21,13 @@ export async function GET(request: Request) {
     const client = await clientPromise;
     const db = client.db('bidding-bot');
 
-    // Fetch brokers from the 'broker' collection
-    // Fetch brokers from the 'broker' collection
     const brokerCollection = db.collection('broker');
     const ownerCollection = db.collection('owner');
 
     let matchingBrokersData: any[] = [];
     let matchingOwnersData: any[] = [];
 
-    if (zone) {
+    if (zone && zone !== "undefined") {
       matchingBrokersData = await brokerCollection.find({
         'Challan Destination City': toCity,
         'FTLType': vehicleType,
@@ -54,8 +52,6 @@ export async function GET(request: Request) {
         'FTLType': vehicleType,
       }).toArray();
     }
-
-    console.log({ matchingBrokersData: matchingBrokersData.length, matchingOwnersData: matchingOwnersData.length })
 
     const brokers = matchingBrokersData.map(item => ({
       id: item._id, 

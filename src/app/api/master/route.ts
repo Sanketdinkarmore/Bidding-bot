@@ -55,6 +55,8 @@ export async function GET(request: NextRequest) {
         { "Challan No": { $regex: search, $options: 'i' } },
         { "Vehicle No": { $regex: search, $options: 'i' } },
         { "GCNOs": { $regex: search, $options: 'i' } },
+        { "Broker Name": { $regex: search, $options: 'i' } },
+        { "Owner Saathi Name": { $regex: search, $options: 'i' } }
       ];
     }
 
