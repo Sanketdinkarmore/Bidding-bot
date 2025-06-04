@@ -31,8 +31,6 @@ function BiddingDetailsContent() {
     return bid._id || bid.id || `${bid.phone}-${bid.amount}-${bid.timestamp}` || `bid-${originalIndex}`;
   };
 
-  console.log(shipment)
-
   // Function to fetch latest bids and shipment data
   const fetchLatestData = async (isPollingCall = false, isManualRefresh = false) => {
     if (isPollingCall) setIsPolling(true);
