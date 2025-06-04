@@ -673,7 +673,7 @@ export default function ViewShipmentsPage() {
                         </span>
                       </div>
 
-                      <p className="text-sm text-gray-500 mt-1">ID: {shipment._id.slice(-8)}</p>
+                      <p className="text-sm text-gray-500 mt-1">ID: {shipment.orderId}</p>
                     </div>
                     
                     <div className="text-right flex gap-x-4 items-center">
