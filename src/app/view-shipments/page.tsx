@@ -652,7 +652,7 @@ export default function ViewShipmentsPage() {
         ) : (
           <div className="space-y-4">
             {filteredShipments.map((shipment) => (
-              <div key={shipment._id} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+              <div key={shipment.orderId} className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 {/* Header Row */}
                 <div className="px-6 py-4 border-b border-gray-100 bg-gray-50">
                   <div className="flex justify-between items-start">
