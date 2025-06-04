@@ -20,9 +20,12 @@ export async function GET(request: Request) {
     const db = client.db('bidding-bot');
 
     // Fetch brokers from the 'broker' collection
+    // Fetch brokers from the 'broker' collection
     const brokerCollection = db.collection('broker');
+    const ownerCollection = db.collection('owner');
 
     let matchingBrokersData: any[] = [];
+    let matchingOwnersData: any[] = [];
 
     if (zone) {
       matchingBrokersData = await brokerCollection.find({
@@ -30,8 +33,20 @@ export async function GET(request: Request) {
         'FTLType': vehicleType,
         'Group': zone
       }).toArray();
+
+      matchingOwnersData = await ownerCollection.find({
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+        'Group': zone
+      }).toArray();
     } else {
       matchingBrokersData = await brokerCollection.find({
+        'Challan Origin City': fromCity,
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+      }).toArray();
+
+      matchingOwnersData = await ownerCollection.find({
         'Challan Origin City': fromCity,
         'Challan Destination City': toCity,
         'FTLType': vehicleType,
@@ -48,19 +63,14 @@ export async function GET(request: Request) {
       vehicleType: item['FTLType']
     })).filter(item => item.name);
 
-    // Fetch owners from the 'owner' collection
-    const ownerCollection = db.collection('owner');
-    const matchingOwnersData = await ownerCollection.find({
-      'Challan Origin City': fromCity,
-      'Challan Destination City': toCity,
-      'FTLType': vehicleType,
-    }, {projection: { _id: 1, "Owner Saathi Name": 1, "Owner Saathi Mobile": 1, "Challan Amount": 1}}).toArray();
-    
     const owners = matchingOwnersData.map(item => ({
       id: item._id,
       name: item['Owner Saathi Name'],
       amount: item['Challan Amount'],
-      phone: item['Owner Saathi Mobile']
+      phone: item['Owner Saathi Mobile'],
+      from: item['Challan Origin City'],
+      to: item['Challan Destination City'],
+      vehicleType: item['FTLType']
     })).filter(item => item.name);
 
     // Calculate challan averages for unique owners/brokers
@@ -69,10 +79,11 @@ export async function GET(request: Request) {
     const uniqueBrokers = new Map();
 
     for (const broker of brokers) {
-      if (uniqueBrokers.has(broker.name)) {
-        uniqueBrokers.get(broker.name).amounts.push(broker.amount);
+      const key = `${broker.name}-${broker.from}`;
+      if (uniqueBrokers.has(key)) {
+        uniqueBrokers.get(key).amounts.push(broker.amount);
       } else {
-        uniqueBrokers.set(broker.name, {
+        uniqueBrokers.set(key, {
           name: broker.name,
           amounts: [broker.amount],
           phone: broker.phone,
@@ -87,14 +98,18 @@ export async function GET(request: Request) {
     const uniqueOwners = new Map();
 
     for (const owner of owners) {
-      if (uniqueOwners.has(owner.name)) {
-        uniqueOwners.get(owner.name).amounts.push(owner.amount);
+      const key = `${owner.name}-${owner.from}`;
+      if (uniqueOwners.has(key)) {
+        uniqueOwners.get(key).amounts.push(owner.amount);
       } else {
-        uniqueOwners.set(owner.name, {
+        uniqueOwners.set(key, {
           name: owner.name,
           amounts: [owner.amount],
           phone: owner.phone,
-          id: owner.id
+          id: owner.id,
+          from: owner.from,
+          to: owner.to,
+          vehicleType: owner.vehicleType
         });
       }
     }
