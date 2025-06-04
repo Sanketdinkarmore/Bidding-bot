@@ -8,7 +8,7 @@ export async function GET() {
     
     // Fetch locations from the 'Location and vehicle type' collection
     const locationAndVehicleData = await db.collection('Location and vehicle type').find({}).toArray();
-    
+
     // Extract unique locations and vehicle types from the fetched data
     // Map locations to include id and name
     // const locations = Array.from(new Set(locationAndVehicleData.map(item => JSON.stringify({
@@ -18,7 +18,8 @@ export async function GET() {
 
     const locations = locationAndVehicleData.map(item => ({
       id: item._id,
-      name: item['CITIES NAME']
+      name: item['CITIES NAME'],
+      zone: item['Zone']
     }));
 
     const uniqueLocations = locations.filter((location, index, self) =>

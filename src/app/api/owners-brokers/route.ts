@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const fromCity = searchParams.get('fromCity');
     const toCity = searchParams.get('toCity');
     const vehicleType = searchParams.get('vehicleType');
+    const zone = searchParams.get('zone');
 
     if (!fromCity || !toCity || !vehicleType) {
       return NextResponse.json(
@@ -20,34 +21,59 @@ export async function GET(request: Request) {
 
     // Fetch brokers from the 'broker' collection
     const brokerCollection = db.collection('broker');
-    const matchingBrokersData = await brokerCollection.find({
-      'Challan Origin City': fromCity,
-      'Challan Destination City': toCity,
-      'FTLType': vehicleType,
-    }).toArray();
+    const ownerCollection = db.collection('owner');
+
+    let matchingBrokersData: any[] = [];
+    let matchingOwnersData: any[] = [];
+
+    if (zone) {
+      matchingBrokersData = await brokerCollection.find({
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+        'Group': zone
+      }).toArray();
+
+      matchingOwnersData = await ownerCollection.find({
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+        'Group': zone
+      }).toArray();
+    } else {
+      matchingBrokersData = await brokerCollection.find({
+        'Challan Origin City': fromCity,
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+      }).toArray();
+
+      matchingOwnersData = await ownerCollection.find({
+        'Challan Origin City': fromCity,
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+      }).toArray();
+    }
 
     // Map broker data to include id, name, and challan amount
     const brokers = matchingBrokersData.map(item => ({
-      id: item._id, // Include the unique MongoDB _id
+      id: item._id, 
       name: item['Broker Name'],
-      amount: item['Challan Amount'], // Assuming 'Challan Amount' is the correct field name
-      phone: item['Broker Mobile']
+      amount: item['Challan Amount'],
+      phone: item['Broker Mobile'],
+      from: item['Challan Origin City'],
+      to: item['Challan Destination City'],
+      vehicleType: item['FTLType']
     })).filter(item => item.name);
 
     // Fetch owners from the 'owner' collection (assuming similar fields)
-    const ownerCollection = db.collection('owner');
-    const matchingOwnersData = await ownerCollection.find({
-      'Challan Origin City': fromCity,
-      'Challan Destination City': toCity,
-      'FTLType': vehicleType,
-    }).toArray();
 
     // Map owner data to include id, name, and challan amount
     const owners = matchingOwnersData.map(item => ({
       id: item._id, // Include the unique MongoDB _id
       name: item['Owner Saathi Name'], // Using the confirmed field name
       amount: item['Challan Amount'], // Assuming 'Challan Amount' is also in owner collection
-      phone: item['Owner Saathi Mobile']
+      phone: item['Owner Saathi Mobile'],
+      from: item['Challan Origin City'],
+      to: item['Challan Destination City'],
+      vehicleType: item['FTLType']
     })).filter(item => item.name);
 
     return NextResponse.json({

@@ -7,6 +7,7 @@ export async function GET(request: Request) {
     const fromCity = searchParams.get('fromCity');
     const toCity = searchParams.get('toCity');
     const vehicleType = searchParams.get('vehicleType');
+    const zone = searchParams.get('zone');
 
     if (!fromCity || !toCity || !vehicleType) {
       return NextResponse.json(
@@ -21,17 +22,30 @@ export async function GET(request: Request) {
     // Fetch brokers from the 'broker' collection
     const brokerCollection = db.collection('broker');
 
-    const matchingBrokersData = await brokerCollection.find({
-      'Challan Origin City': fromCity,
-      'Challan Destination City': toCity,
-      'FTLType': vehicleType,
-    }, {projection: { _id: 1, "Broker Name": 1, "Broker Mobile": 1, "Challan Amount": 1}}).toArray();
+    let matchingBrokersData: any[] = [];
+
+    if (zone) {
+      matchingBrokersData = await brokerCollection.find({
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+        'Group': zone
+      }).toArray();
+    } else {
+      matchingBrokersData = await brokerCollection.find({
+        'Challan Origin City': fromCity,
+        'Challan Destination City': toCity,
+        'FTLType': vehicleType,
+      }).toArray();
+    }
 
     const brokers = matchingBrokersData.map(item => ({
-      id: item._id,
+      id: item._id, 
       name: item['Broker Name'],
       amount: item['Challan Amount'],
-      phone: item['Broker Mobile']
+      phone: item['Broker Mobile'],
+      from: item['Challan Origin City'],
+      to: item['Challan Destination City'],
+      vehicleType: item['FTLType']
     })).filter(item => item.name);
 
     // Fetch owners from the 'owner' collection
@@ -62,7 +76,10 @@ export async function GET(request: Request) {
           name: broker.name,
           amounts: [broker.amount],
           phone: broker.phone,
-          id: broker.id
+          id: broker.id,
+          from: broker.from,
+          to: broker.to,
+          vehicleType: broker.vehicleType
         });
       }
     }

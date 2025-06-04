@@ -48,7 +48,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}>
         <QueryProvider>
           {!isAuthPage && <Navbar />}
-          <main className="w-full py-8 px-4 sm:px-6 lg:px-8">
+          <main className="w-full py-4 px-2">
             {children}
           </main>
           {!isAuthPage && (

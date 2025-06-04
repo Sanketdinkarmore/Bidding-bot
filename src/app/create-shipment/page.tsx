@@ -88,7 +88,7 @@ export default function CreateShipmentPage() {
   // New state for owner/broker selection
   const [showOwnerBrokerSelection, setShowOwnerBrokerSelection] = useState(false);
   const [availableOwners, setAvailableOwners] = useState<{ id: string, name: string, amounts: any }[]>([]);
-  const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amounts: any }[]>([]);
+  const [availableBrokers, setAvailableBrokers] = useState<{ id: string, name: string, amounts: any, from: string, to:string, vehicleType: string }[]>([]);
   const [selectedOwners, setSelectedOwners] = useState<string[]>([]); // Store owner IDs
   const [selectedBrokers, setSelectedBrokers] = useState<string[]>([]); // Store broker IDs
   const [isFetchingOwnersBrokers, setIsFetchingOwnersBrokers] = useState(false);
@@ -287,8 +287,10 @@ export default function CreateShipmentPage() {
   const fetchOwnersAndBrokers = async (fromCity: string, toCity: string, vehicleType: string) => {
     setIsFetchingOwnersBrokers(true);
 
+    const city: any = locations.find(location => location.name === fromCity)
+
     try {
-      const response = await fetch(`/api/create-shipment-owners-brokers?fromCity=${fromCity}&toCity=${toCity}&vehicleType=${vehicleType}`);
+      const response = await fetch(`/api/create-shipment-owners-brokers?fromCity=${fromCity}&toCity=${toCity}&vehicleType=${vehicleType}&zone=${city?.zone}`);
       if (!response.ok) {
         throw new Error('Failed to fetch owners and brokers');
       }
@@ -413,10 +415,10 @@ export default function CreateShipmentPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main className="w-full mx-auto px-4 sm:px-6 lg:px-4 py-6">
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 overflow-hidden">
           {/* Form Header */}
-          <div className="relative px-8 py-8 bg-gradient-to-r from-blue-600 to-indigo-600">
+          <div className="relative px-4 py-4 bg-gradient-to-r from-blue-600 to-indigo-600">
             <div className="absolute inset-0 bg-black/5"></div>
             <div className="relative">
               <div className="flex items-center space-x-3">
@@ -438,7 +440,7 @@ export default function CreateShipmentPage() {
           </div>
 
           {/* Form Content */}
-          <div className="px-8 py-8">
+          <div className="px-4 py-4">
             {error && (
               <div className="mb-8 p-6 bg-gradient-to-r from-red-50 to-rose-50 border border-red-200 rounded-xl">
                 <div className="flex items-start">
@@ -1114,7 +1116,9 @@ export default function CreateShipmentPage() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-800">Vehicle Owners</h3>
+                        <h3 className="text-xl font-bold text-gray-800">Vehicle Owners
+                          <span className="ml-2 inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 align-middle">{availableOwners.length}</span>
+                        </h3>
                         <p className="text-sm text-blue-600">Select owners to notify about this shipment</p>
                       </div>
                     </div>
@@ -1215,7 +1219,9 @@ export default function CreateShipmentPage() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-800">Transport Brokers</h3>
+                        <h3 className="text-xl font-bold text-gray-800">Transport Brokers
+                          <span className="ml-2 inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 align-middle">{availableBrokers.length}</span>
+                        </h3>
                         <p className="text-sm text-green-600">Select brokers to receive this shipment</p>
                       </div>
                     </div>
@@ -1241,8 +1247,8 @@ export default function CreateShipmentPage() {
                         <p className="text-gray-500">No transport brokers available for this route and vehicle type.</p>
                       </div>
                     ) : (
-                      <div className="space-y-3">
-                        <div className="text-sm text-gray-600 mb-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                      <div className="space-y-3 h-[550px] overflow-y-auto pr-2"> {/* MODIFIED: Added max-h-96, overflow-y-auto, and pr-2 */}
+                        <div className="text-sm text-gray-600 mb-4 p-3 bg-green-50 rounded-lg border border-green-100 sticky top-0 z-10 backdrop-blur-sm bg-opacity-90"> {/* MODIFIED: Made sticky, added z-index and slight blur for better scroll UX */}
                           <svg className="w-4 h-4 inline mr-1 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
@@ -1289,6 +1295,30 @@ export default function CreateShipmentPage() {
                                     )}
                                   </div>
                                   <p className="text-sm text-gray-500 mt-1">Transport Broker</p>
+                                  
+                                  {/* Add route and vehicle information */}
+                                  <div className="mt-2 space-y-1.5 flex flex-col">
+                                    {/* Route: From -> To */}
+                                    <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors duration-150 px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                                      <svg aria-hidden="true" className="w-4 h-4 text-indigo-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                      </svg>
+                                      <div className="flex items-baseline text-xs font-semibold text-gray-700 min-w-0"> {/* min-w-0 needed for flex child truncation */}
+                                        <span className="truncate" title={broker.from}>{broker.from}</span>
+                                        <span className="mx-1 text-indigo-400 flex-shrink-0">→</span>
+                                        <span className="truncate" title={broker.to}>{broker.to}</span>
+                                      </div>
+                                    </div>
+                                    {/* Vehicle Type */}
+                                    <div className="flex items-center bg-gray-50 hover:bg-gray-100 transition-colors duration-150 px-2.5 py-1.5 rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                                      <svg aria-hidden="true" className="w-4 h-4 text-sky-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+                                      </svg>
+                                      <span className="text-xs font-semibold text-gray-700 truncate" title={broker.vehicleType}>
+                                        Vehicle: {broker.vehicleType}
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                               <div className={`ml-4 transition-colors ${
