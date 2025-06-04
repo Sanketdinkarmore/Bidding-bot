@@ -9,6 +9,8 @@ export async function GET(request: Request) {
     const vehicleType = searchParams.get('vehicleType');
     const zone = searchParams.get('zone');
 
+    console.log({ fromCity, toCity, vehicleType, zone })
+
     if (!fromCity || !toCity || !vehicleType) {
       return NextResponse.json(
         { error: 'Missing required parameters: fromCity, toCity, vehicleType' },
@@ -52,6 +54,8 @@ export async function GET(request: Request) {
         'FTLType': vehicleType,
       }).toArray();
     }
+
+    console.log({ matchingBrokersData: matchingBrokersData.length, matchingOwnersData: matchingOwnersData.length })
 
     const brokers = matchingBrokersData.map(item => ({
       id: item._id, 

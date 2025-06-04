@@ -341,11 +341,12 @@ export default function CreateShipmentPage() {
     setIsSubmitting(true);
     setError(null);
     setSuccess(null);
+    const from = selectedFromCity || formData.selectFrom
 
     try {
       const selectionData = {
         shipmentDetails: {
-          fromCity: selectedFromCity || formData.selectFrom,
+          fromCity: from,
           toCity: selectedToCity || formData.selectTo,
           vehicleType: formData.vehicleType,
           pickupLocation: formData.pickupLocation,
@@ -357,6 +358,7 @@ export default function CreateShipmentPage() {
           loadingTime: formData.loadingTime,
           remark: formData.remark,
           bidClosingDateTime: new Date(`${formData.bidClosingDate}T${formData.bidClosingTime}`),
+          zone: locations.find(location => location.name === from)
         },
         selectedOwners: availableOwners.filter(owner => selectedOwners.includes(owner.id)),
         selectedBrokers: availableBrokers.filter(broker => selectedBrokers.includes(broker.id)),

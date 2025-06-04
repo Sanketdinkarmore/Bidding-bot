@@ -19,6 +19,7 @@ export async function POST(request: Request) {
       shipmentDetails: {
         ...selectionData.shipmentDetails,
         bidClosingDateTime: new Date(selectionData.shipmentDetails.bidClosingDateTime),
+        zone: selectionData.shipmentDetails.zone
       },
       orderId,
       createdAt: new Date(),

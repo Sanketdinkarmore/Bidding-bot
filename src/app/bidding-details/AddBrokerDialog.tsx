@@ -42,7 +42,7 @@ const AddBrokerDialog: React.FC<AddBrokerDialogProps> = ({
     setError(null);
     try {
       // Replace with your actual API endpoint
-      const response = await fetch(`/api/brokers?fromCity=${shipment.shipmentDetails.fromCity}&toCity=${shipment.shipmentDetails.toCity}&vehicleType=${shipment.shipmentDetails.vehicleType}`);
+      const response = await fetch(`/api/brokers?fromCity=${shipment.shipmentDetails.fromCity}&toCity=${shipment.shipmentDetails.toCity}&vehicleType=${shipment.shipmentDetails.vehicleType}&zone=${shipment.shipmentDetails.zone}`);
 
       if (!response.ok) {
         throw new Error('Failed to fetch brokers');
