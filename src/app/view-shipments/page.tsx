@@ -546,7 +546,7 @@ export default function ViewShipmentsPage() {
                   <span className="text-xs font-medium text-gray-500">Active filters:</span>
                   {searchTerm && (
                     <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Search: "{searchTerm}"
+                      Search: &quot;{searchTerm}&quot;
                       <button
                         onClick={() => setSearchTerm('')}
                         className="ml-1.5 h-3 w-3 text-blue-600 hover:text-blue-800"
