@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 interface ShipmentData {
   _id: string;
+  orderId: string;
   numberOfPackages: number;
   loadingDate: string;
   loadingTime: string;
