@@ -93,7 +93,7 @@ async function sendBiddingTemplate(data: any, broker: any) {
                     "parameters": [
                         {
                             "type": "text",
-                            "text": data.uniqueId.toString() ?? "-"
+                            "text": data.orderId ?? "-"
                         },
                         {
                             "type": "text",

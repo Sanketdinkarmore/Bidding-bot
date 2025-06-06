@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
 async function sendWinnerTemplate(data: any, broker: any) {
   try {
 
-    const message = `🎉 Congratulations! You have WON the bid for Booking ID: ${data._id}
+    const message = `🎉 Congratulations! You have WON the bid for Booking ID: ${data.orderId}
 📋 Shipment and Bid Details:
 - Bid Amount: ${data.bidAmount}
 - Date: ${data.loadingDate}
