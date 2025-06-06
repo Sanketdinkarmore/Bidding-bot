@@ -58,6 +58,7 @@ export async function POST(request: Request) {
         deliveryAdress: selectionData.shipmentDetails.dropLocation,
         remark: selectionData.shipmentDetails.remark,
         orderId: orderId,
+        uniqueId: result.insertedId,
       };
 
       for (const broker of matchingBrokers) {
