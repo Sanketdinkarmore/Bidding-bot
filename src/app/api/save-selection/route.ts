@@ -57,7 +57,7 @@ export async function POST(request: Request) {
         goodsQuantity: selectionData.shipmentDetails.totalVolume,
         deliveryAdress: selectionData.shipmentDetails.dropLocation,
         remark: selectionData.shipmentDetails.remark,
-        uniqueId: result.insertedId,
+        orderId: orderId,
       };
 
       for (const broker of matchingBrokers) {
