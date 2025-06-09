@@ -35,6 +35,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Add authentication state
+  const [user, setUser] = useState<any>()
 
   useEffect(() => {
     const user = localStorage.getItem('user');
@@ -47,15 +48,25 @@ export default function Home() {
     }
   }, [router]);
 
+  useEffect(() => {
+    const user = localStorage.getItem("user")
+    if (user) {
+      setUser(JSON.parse(user))
+    }
+  }, [])
+
   const fetchUsers = async () => {
     try {
       // Note: This still fetches from /api/users, which might need updating
       // based on your user management API endpoints.
       const response = await fetch('/api/users'); 
+
       if (!response.ok) {
         throw new Error('Failed to fetch users');
       }
+
       const data = await response.json();
+
       setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -304,7 +315,7 @@ export default function Home() {
         </div>
 
         {/* User Management with enhanced design */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-lg">
+        {user && user.role === "admin" && <div className="overflow-hidden rounded-2xl bg-white shadow-lg">
           <div className="border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white px-6 py-5">
             <h3 className="text-xl font-semibold text-gray-900">User Management</h3>
             <p className="mt-1 text-sm text-gray-500">Add and manage system users</p>
@@ -406,7 +417,7 @@ export default function Home() {
               </div>
             )}
           </div>
-        </div>
+        </div>}
       </div>
     </div>
   );

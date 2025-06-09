@@ -19,6 +19,7 @@ export async function POST(request: Request) {
           id: user._id,
           name: user.name,
           phoneNumber: user.phoneNumber,
+          role: user.role,
         },
       });
     }

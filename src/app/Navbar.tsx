@@ -1,18 +1,36 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import Image from 'next/image';
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { LogOut } from "lucide-react";
 
 export default function Navbar() {
-  const [mounted, setMounted] = useState(false);
+  const router = useRouter()
   const pathname = usePathname();
+
+  const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>()
 
   useEffect(() => {
     setMounted(true);
+
+    const user = localStorage.getItem("user")
+    if (user) {
+      setUser(JSON.parse(user))
+    }
   }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      localStorage.removeItem("user")
+      router.push("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  }, [router]);
 
   if (!mounted) {
     return null;
@@ -53,12 +71,12 @@ export default function Navbar() {
                 >
                   Create Shipment Bids
                 </Link>
-                <Link
+                {user && user.role === "admin" && <Link
                   href="/master"
                   className={`${pathname.startsWith('/master') ? 'border-b-2 border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'} inline-flex items-center px-3 pt-1 border-b-2 text-sm font-medium`}
                 >
                   Master
-                </Link>
+                </Link>}
               </div>
             </div>
             <div className="flex items-center sm:hidden">
@@ -82,6 +100,14 @@ export default function Navbar() {
             </div>
             <div className="hidden sm:flex sm:items-center sm:ml-6">
               <button
+                onClick={handleLogout}
+                type="button"
+                className="flex w-full scale-95 items-center gap-3 rounded-md py-2 px-4 text-black border-[1px] border-gray-300 transition-all duration-150 hover:border-blue-500 hover:text-blue-500"
+              >
+                <LogOut size={18} className="relative min-w-[24px]" />
+                <span className="font-medium text-sm">Logout</span>
+              </button>
+              {/* <button
                 type="button"
                 className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 aria-label="View notifications"
@@ -89,7 +115,7 @@ export default function Navbar() {
                 <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -125,13 +151,13 @@ export default function Navbar() {
           >
             Create Shipment Bids
           </Link>
-          <Link
+          {user && user.role === "admin" && <Link
             href="/master"
             className={`${pathname.startsWith('/master') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700'} block pl-3 pr-4 py-2 border-l-4 text-base font-medium`}
             onClick={() => setIsMobileMenuOpen(false)}
           >
             Master
-          </Link>
+          </Link>}
         </div>
       </div>
     </>

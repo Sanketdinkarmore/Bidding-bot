@@ -31,7 +31,12 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user._id,
+          name: data.user.name,
+          phoneNumber: data.user.phoneNumber,
+          role: data.user.role,
+        }));
         router.push('/');
       } else {
         setError(data.message || 'Login failed');

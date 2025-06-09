@@ -4,6 +4,8 @@ import { useState, useMemo, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMasterData, MasterDataFilters } from '../../lib/api';
 import { LocationAndVehicleTypeResponse } from '../../types';
+import { Download, Upload } from 'lucide-react';
+import UploadBrokerMasterDialog from './_components/UploadBrokerMasterDialog';
 
 export default function MasterPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -326,9 +328,15 @@ export default function MasterPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto px-4 py-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Master Data Management</h1>
-          <p className="mt-2 text-gray-600">Manage and view all logistics master data entries</p>
+        <div className="flex justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Master Data Management</h1>
+            <p className="mt-2 text-gray-600">Manage and view all logistics master data entries</p>
+          </div>
+
+          <div>
+            <UploadBrokerMasterDialog />
+          </div>
         </div>
 
         {/* Search and Filters Section */}
