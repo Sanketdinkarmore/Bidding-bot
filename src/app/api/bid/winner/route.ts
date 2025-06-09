@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
             // Send winner notification
             const data = {
                 bidAmount: body.selectedWinner.amount,
-                ...body.shipmentDetails
+                ...body.shipmentDetails,
+                orderId: body.orderId
             }
 
             await sendWinnerTemplate(data, body.selectedWinner);
