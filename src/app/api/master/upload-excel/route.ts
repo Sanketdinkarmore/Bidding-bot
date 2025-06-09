@@ -8,9 +8,9 @@ import clientPromise from '@/lib/mongodb';
 
 const UPLOAD_DIR = path.resolve(process.cwd(), "public/uploads");
 
-async function getExcelHeaders(filePath: string): Promise<string[]> {
+async function getExcelHeaders(buffer: Buffer): Promise<string[]> {
   const workbook = new ExcelJS.Workbook();
-  await workbook.xlsx.readFile(filePath);
+  await workbook.xlsx.load(buffer as any);
   
   const worksheet = workbook.getWorksheet(1); // Get first worksheet
   if (!worksheet) {
@@ -41,23 +41,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "No file provided" }, { status: 400 });
      }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    if (!fs.existsSync(UPLOAD_DIR)) {
-      fs.mkdirSync(UPLOAD_DIR);
-    }
-
-    const filePath = path.resolve(UPLOAD_DIR, file.name);
-    fs.writeFileSync(filePath, buffer);
+    const buffer = Buffer.from(await file.arrayBuffer()) as Buffer;
 
     try {
         const client = await clientPromise;
         const db = client.db('bidding-bot');
         const collection = db.collection('broker');
 
-        const headers = await getExcelHeaders(filePath);
+        const headers = await getExcelHeaders(buffer);
 
         const workbook = new ExcelJS.Workbook();
-        await workbook.xlsx.readFile(filePath);
+        await workbook.xlsx.load(buffer as any);
         
         const worksheet = workbook.getWorksheet(1);
         if (!worksheet) {
@@ -65,7 +59,7 @@ export async function POST(request: NextRequest) {
         }
 
         const lastRow = worksheet.lastRow?.number || 0
-        const rows = worksheet.getRows(2, lastRow)?.map((row: ExcelJS.Row) => {
+        const rows = worksheet.getRows(2, lastRow - 1)?.map((row: ExcelJS.Row) => {
             const r = {};
 
             for (let i = 0; i < headers.length; i++) {
@@ -77,11 +71,7 @@ export async function POST(request: NextRequest) {
             return r;
         })
 
-        console.log(rows);
-
         await collection.insertMany(rows || []);
-
-        fs.unlinkSync(filePath);
 
         return NextResponse.json({ success: true });
 
