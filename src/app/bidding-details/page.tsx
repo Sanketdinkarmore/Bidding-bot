@@ -279,7 +279,8 @@ function BiddingDetailsContent() {
             phone: selectedBid.phone,
             amount: selectedBid.amount
           },
-          shipmentDetails: shipment.shipmentDetails
+          shipmentDetails: shipment.shipmentDetails,
+          orderId: shipment.orderId
         }),
       });
 
