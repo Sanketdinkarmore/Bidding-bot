@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { TrashIcon } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -27,10 +28,10 @@ export default function Home() {
   const [users, setUsers] = useState<User[]>([]);
   const [shipments, setShipments] = useState<ShipmentData[]>([]);
   const [name, setName] = useState('');
-  // Keeping email state for the 'Add User' form in the dashboard for now,
-  // as the user only requested email to be replaced by phone in login/register forms.
-  // This might need adjustment depending on the backend for this specific form.
-  const [email, setEmail] = useState(''); 
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,7 +124,7 @@ export default function Home() {
         },
         // Still using email here based on the original code. 
         // If your /api/users endpoint uses phone number, update this.
-        body: JSON.stringify({ name, email }), 
+        body: JSON.stringify({ name, password, phoneNumber: phone, role: "user" }), 
       });
       
       if (!response.ok) {
@@ -133,8 +134,11 @@ export default function Home() {
       }
       
       setName('');
-      setEmail('');
-      await fetchUsers(); // Refresh user list after adding
+      setConfirmPassword('')
+      setPassword('')
+      setPhone('')
+
+      await fetchUsers(); 
     } catch (error: any) {
       setError('Error creating user: ' + error.message);
       console.error('Error creating user:', error);
@@ -151,6 +155,27 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return null; // Redirecting to login is handled by useEffect
+  }
+
+  const handleDelete = async (userId: string) => {
+    try {
+      const response = await fetch('/api/users', { 
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }), 
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete user');
+      }
+
+      await fetchUsers(); 
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+    }
   }
 
   // Render dashboard content if authenticated
@@ -336,38 +361,67 @@ export default function Home() {
               </div>
             )}
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 gap-y-3 sm:grid-cols-2 sm:gap-x-3">
+                <div className="flex flex-col">
+                  <label htmlFor="name" className="mb-1 text-sm font-semibold text-gray-700">Name</label>
                   <input
                     type="text"
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    placeholder="Enter full name"
+                    className="rounded-md border border-gray-300 px-4 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition sm:text-sm"
                     required
                     disabled={isSubmitting}
                   />
                 </div>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
+                <div className="flex flex-col">
+                  <label htmlFor="phone" className="mb-1 text-sm font-semibold text-gray-700">Phone</label>
                   <input
-                    type="email"
-                    id="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                    type="tel"
+                    id="phone"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Enter phone number"
+                    className="rounded-md border border-gray-300 px-4 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition sm:text-sm"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="password" className="mb-1 text-sm font-semibold text-gray-700">Password</label>
+                  <input
+                    type="password"
+                    id="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Create password"
+                    className="rounded-md border border-gray-300 px-4 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition sm:text-sm"
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label htmlFor="confirmPassword" className="mb-1 text-sm font-semibold text-gray-700">Confirm Password</label>
+                  <input
+                    type="password"
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat password"
+                    className="rounded-md border border-gray-300 px-4 py-2 text-gray-900 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none transition sm:text-sm"
                     required
                     disabled={isSubmitting}
                   />
                 </div>
               </div>
+
               <div>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className={`inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`inline-flex items-center rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   {isSubmitting ? (
                     <>
@@ -391,25 +445,40 @@ export default function Home() {
 
             {users.length > 0 && (
               <div className="mt-8">
-                <h4 className="text-lg font-medium text-gray-900">Recent Users</h4>
-                <ul role="list" className="mt-4 divide-y divide-gray-200">
-                  {users.slice(0, 5).map((user) => (
-                    <li key={user._id} className="py-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
-                            <span className="text-sm font-medium text-white">
-                              {user.name && typeof user.name === 'string' && user.name.length > 0 ? user.name.charAt(0).toUpperCase() : ''}
-                            </span>
+                <h4 className="text-lg font-medium text-gray-900">Users</h4>
+                <ul
+                  role="list"
+                  className="h-[400px] overflow-y-scroll mt-4 divide-y divide-gray-200"
+                >
+                  {users.map((user) => (
+                    <li
+                      key={user._id}
+                      className="group hover:bg-gray-50 px-2 rounded-lg transition"
+                    >
+                      <div className="flex justify-between space-x-4">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className="h-10 w-10 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+                              <span className="text-sm font-medium text-white">
+                                {user.name && typeof user.name === 'string' && user.name.length > 0
+                                  ? user.name.charAt(0).toUpperCase()
+                                  : ''}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1 py-4 ">
+                            <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
+                            <p className="truncate text-sm text-gray-500">{user.phoneNumber}</p>
                           </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-gray-900">{user.name}</p>
-                          <p className="truncate text-sm text-gray-500">{user.phoneNumber}</p>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {new Date(user.createdAt).toLocaleDateString()}
-                        </div>
+
+                        <button
+                          onClick={() => handleDelete(user._id)}
+                          className="invisible group-hover:visible text-gray-400 hover:text-red-600 transition"
+                          title="Delete user"
+                        >
+                          <TrashIcon />
+                        </button>
                       </div>
                     </li>
                   ))}

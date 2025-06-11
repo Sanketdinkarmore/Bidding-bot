@@ -34,3 +34,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
   }
 } 
+
+export async function DELETE(request: Request) {
+  try {
+    const client = await clientPromise;
+    const db = client.db('bidding-bot');
+    const body = await request.json();
+
+    const result = await db.collection('users').deleteOne({ _id: new ObjectId(body.userId) });
+
+    if (!result.acknowledged) {
+      throw new Error('Failed to delete user');
+    }
+
+    return NextResponse.json({ message: 'User deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return NextResponse.json({ error: 'Failed to create user' }, { status: 500 });
+  }
+} 
