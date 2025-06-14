@@ -681,7 +681,7 @@ export default function ViewShipmentsPage() {
                     <div className="text-right flex gap-x-4 items-center">
                       {shipment.lowestBid && (
                         <div className="mb-2">
-                          <div className="text-lg font-bold text-green-600">₹{shipment.lowestBid.amount.toLocaleString()}</div>
+                          <div className="text-lg font-bold text-green-600">₹{shipment.lowestBid.amount?.toLocaleString()}</div>
                           <p className="text-xs text-gray-500">Lowest Bid</p>
                         </div>
                       )}

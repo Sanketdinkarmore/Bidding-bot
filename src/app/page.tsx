@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TrashIcon } from 'lucide-react';
+import { TrashIcon, Package, User, CheckCircle } from 'lucide-react';
+import DashboardCard from '@/components/DashboardCard';
 
 interface User {
   _id: string;
@@ -153,6 +154,10 @@ export default function Home() {
   const totalUsers = users.length;
   const recentShipments = shipments.slice(0, 5);
 
+  const shipmentProgress = totalShipments > 0 ? (totalShipments / 200) * 100 : 0;
+  const activeShipmentProgress = totalShipments > 0 ? (activeShipments / totalShipments) * 100 : 0;
+  const userProgress = totalUsers > 0 ? (totalUsers / 50) * 100 : 0;
+
   if (!isAuthenticated) {
     return null; // Redirecting to login is handled by useEffect
   }
@@ -180,7 +185,7 @@ export default function Home() {
 
   // Render dashboard content if authenticated
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-100">
       {/* Page Header */}
       <div className="bg-white shadow-sm px-4 py-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
@@ -207,51 +212,43 @@ export default function Home() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Total Shipments */}
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 rounded-md bg-blue-100 p-3">
-                <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <dt className="truncate text-sm font-medium text-gray-500">Total Shipments</dt>
-                <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{totalShipments}</dd>
-              </div>
-            </div>
-          </div>
-
-          {/* Active Shipments */}
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 rounded-md bg-green-100 p-3">
-                <svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <dt className="truncate text-sm font-medium text-gray-500">Active Shipments</dt>
-                <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{activeShipments}</dd>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Users */}
-          <div className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow transition-all duration-200 hover:shadow-lg hover:scale-[1.02]">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 rounded-md bg-purple-100 p-3">
-                <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <dt className="truncate text-sm font-medium text-gray-500">Total Users</dt>
-                <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{totalUsers}</dd>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <DashboardCard
+            title="Total Shipments"
+            amount={totalShipments.toString()}
+            progress={shipmentProgress}
+            Icon={Package}
+            cardBgClass="bg-blue-100/50"
+            iconBgClass="bg-blue-200/50"
+            iconClass="text-blue-600"
+            textColor="text-blue-900"
+            amountColor="text-blue-900"
+            progressColor="bg-blue-500"
+          />
+          <DashboardCard
+            title="Active Shipments"
+            amount={activeShipments.toString()}
+            progress={activeShipmentProgress}
+            Icon={CheckCircle}
+            cardBgClass="bg-blue-100/50"
+            iconBgClass="bg-blue-200/50"
+            iconClass="text-blue-600"
+            textColor="text-blue-900"
+            amountColor="text-blue-900"
+            progressColor="bg-blue-500"
+          />
+          <DashboardCard
+            title="Total Users"
+            amount={totalUsers.toString()}
+            Icon={User}
+            showProgress={false}
+            cardBgClass="bg-blue-100/50"
+            iconBgClass="bg-blue-200/50"
+            iconClass="text-blue-600"
+            textColor="text-blue-900"
+            amountColor="text-blue-900"
+            progressColor="bg-blue-500"
+          />
         </div>
 
         {/* Recent Shipments */}
